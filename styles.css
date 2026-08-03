@@ -438,6 +438,15 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .lesson-title { font-size: 12.5px; color: #1a3d5c; line-height: 1.35; }
 .lesson-row.on .lesson-title { color: #3f9e6e; }
 .lesson-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.study-timer { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+.st-clock { font-size: 32px; font-weight: 800; color: #14304d; font-variant-numeric: tabular-nums; letter-spacing: 1px; line-height: 1; }
+.st-btn { min-width: 116px; }
+.st-sub { font-size: 12px; color: var(--text-sub); margin-top: 10px; }
+.st-sub b { color: #1a3d5c; font-weight: 700; }
+#studyCard .card-progress { color: #9aa7b4; font-weight: 600; }
+#studyCard .card-progress.on { color: #2b6fb0; }
+#studyCard .card-progress.on::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #2b6fb0; margin-right: 5px; vertical-align: middle; animation: stPulse 1.1s infinite; }
+@keyframes stPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
 
 @media (max-width: 720px) {
   .vd-stats { grid-template-columns: repeat(2, 1fr); }

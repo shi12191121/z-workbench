@@ -55,6 +55,7 @@ function defaultState() {
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
+    courses: [], videos: [],
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
   };
@@ -709,17 +710,95 @@ function updateTodoPageSub() {
   el.textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${wk[d.getDay()]}`;
 }
 
-/* 电脑剪辑 */
+/* ===== 电脑剪辑 · 课程追踪 ===== */
+function ensureCourses() {
+  // 首次进入预置两门影视飓风课程（用户明确在学）
+  if (S.courses && S.courses.length) return;
+  S.courses = [
+    { id: uid(), name: '影视飓风 · 剪辑实战课', total: 12, current: 0, done: false },
+    { id: uid(), name: '影视飓风 · iPhone 摄影课', total: 8, current: 0, done: false }
+  ];
+  Store.save();
+}
+function renderCourses() {
+  ensureCourses();
+  const cs = S.courses;
+  const studying = cs.filter(c => !c.done).length;
+  const done = cs.filter(c => c.done).length;
+  const a = document.getElementById('courseStudying'); if (a) a.textContent = studying;
+  const b = document.getElementById('courseDone'); if (b) b.textContent = done;
+  const wrap = document.getElementById('courseList');
+  if (!wrap) return;
+  if (!cs.length) { wrap.innerHTML = '<div class="empty-state" style="padding:14px 0;">还没有课程，添加一门开始学吧～</div>'; return; }
+  wrap.innerHTML = cs.map(c => {
+    const pct = c.total ? Math.min(100, Math.round((c.current / c.total) * 100)) : 0;
+    const prog = c.done ? '已结课 ✓' : `第 <b>${c.current}</b> / <b>${c.total}</b> 节`;
+    return `<div class="course-card ${c.done ? 'done' : ''}">
+      <div class="course-head">
+        <div class="course-name">🎬 ${escapeHtml(c.name)}</div>
+        <button class="course-del" data-act="del" data-course="${c.id}" title="删除">✕</button>
+      </div>
+      <div class="course-bar"><div class="course-fill" style="width:${pct}%"></div></div>
+      <div class="course-foot">
+        <span class="course-prog">${prog}</span>
+        <div class="course-ctrl">
+          <button class="course-step" data-act="prev" data-course="${c.id}" ${c.current<=0?'disabled':''}>−</button>
+          <button class="course-step" data-act="next" data-course="${c.id}">＋</button>
+          <button class="course-set" data-act="set" data-course="${c.id}" title="改总节数">⚙</button>
+          <button class="course-finish ${c.done?'on':''}" data-act="finish" data-course="${c.id}">${c.done?'已完成':'标记完成'}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* 电脑剪辑 · 剪辑项目 */
 function renderVideos() {
-  $('#videoCount').textContent = S.videos.length;
-  $('#videoMinutes').textContent = S.videos.reduce((a, v) => a + (+v.dur || 0), 0);
-  $('#videoDone').textContent = S.videos.filter(v => v.done).length;
+  const a = document.getElementById('projCount'); if (a) a.textContent = S.videos.length;
+  const b = document.getElementById('projMinutes'); if (b) b.textContent = S.videos.reduce((s, v) => s + (+v.dur || 0), 0);
+  const d = document.getElementById('projDone'); if (d) d.textContent = S.videos.filter(v => v.done).length;
+  const t = document.getElementById('projTotal'); if (t) t.textContent = S.videos.length;
   renderList(S.videos, '#videoList', v => `
     <div class="list-item">
       <div class="task-checkbox ${v.done ? 'checked' : ''}" data-vt="${v.id}"></div>
       <div class="li-main"><div class="li-title" style="${v.done?'text-decoration:line-through;color:#718096':''}">${escapeHtml(v.name)}</div><div class="li-sub">⏱ ${v.dur} 分钟 · ${v.date}</div></div>
       <button class="icon-btn" data-vd="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
     </div>`, '还没有剪辑项目，添加一个开始吧～');
+}
+
+/* 课程交互（事件委托） */
+const courseListEl = document.getElementById('courseList');
+if (courseListEl) {
+  courseListEl.addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const id = +btn.dataset.course, act = btn.dataset.act;
+    const c = S.courses.find(x => x.id === id); if (!c) return;
+    if (act === 'prev') { c.current = Math.max(0, c.current - 1); if (c.current < c.total) c.done = false; }
+    else if (act === 'next') { c.current = Math.min(c.total, c.current + 1); if (c.current >= c.total) c.done = true; }
+    else if (act === 'finish') { c.done = !c.done; if (c.done) c.current = c.total; else if (c.current >= c.total) c.current = c.total; }
+    else if (act === 'set') {
+      const n = prompt('设置总节数（当前 ' + c.total + '）', c.total);
+      if (n != null) { const v = parseInt(n, 10); if (v > 0) { c.total = v; if (c.current > v) c.current = v; if (c.current >= v) c.done = true; } }
+    }
+    else if (act === 'del') { S.courses = S.courses.filter(x => x.id !== id); }
+    Store.save(); renderCourses();
+  });
+}
+const btnAddCourse = document.getElementById('btnAddCourse');
+if (btnAddCourse) {
+  btnAddCourse.addEventListener('click', () => {
+    const name = (document.getElementById('courseName').value || '').trim();
+    let total = parseInt(document.getElementById('courseTotal').value, 10);
+    if (!name) return toast('请填课程名');
+    if (!total || total < 1) total = 1;
+    S.courses = S.courses || [];
+    S.courses.push({ id: uid(), name, total, current: 0, done: false });
+    Store.save();
+    document.getElementById('courseName').value = '';
+    document.getElementById('courseTotal').value = '';
+    renderCourses();
+    toast('课程已添加 🎬');
+  });
 }
 $('#btnAddVideo').onclick = () => {
   const name = $('#videoName').value.trim(), dur = +$('#videoDur').value;
@@ -1629,9 +1708,9 @@ function renderLele() {
   const cdWrap = document.getElementById('gfCountdowns');
   if (cdWrap) {
     const items = [
-      { emoji: '💕', name: '在一起纪念日', date: nextDateOfYear('12-19', today) },
-      { emoji: '🎂', name: '她的生日（农历 9-28）', date: lunar928Solar(new Date(today).getFullYear()) || '2026-11-06' },
-      { emoji: '🎁', name: '我的生日', date: nextDateOfYear('08-03', today) }
+      { emoji: '💕', name: '在一起纪念日', date: nextDateOfYear('12-19', today), bornYear: 2025 },
+      { emoji: '🎂', name: '她的生日（农历 9-28）', date: lunar928Solar(new Date(today).getFullYear()) || '2026-11-06', bornYear: 2006 },
+      { emoji: '🎁', name: '我的生日', date: nextDateOfYear('08-03', today), bornYear: 2007 }
     ];
     (S.gfCust || []).forEach(c => items.push({ emoji: c.emoji || '⭐', name: c.name, date: c.date, custom: true, id: c.id }));
     cdWrap.innerHTML = items.map(it => {
@@ -1641,9 +1720,11 @@ function renderLele() {
       const txt = isToday ? '就是今天 🎉' : (isPast ? '已经 ' + (-d) + ' 天' : '还有 ' + d + ' 天');
       const cls = isToday ? 'gf-cd gf-cd-today' : (isPast ? 'gf-cd gf-cd-past' : 'gf-cd');
       const delBtn = it.custom ? `<button class="gf-cd-del" data-cd="${it.id}">✕</button>` : '';
+      const yearTxt = it.bornYear ? `第 ${new Date(it.date).getFullYear() - it.bornYear} 年` : '';
       return `<div class="${cls}">
         <div class="gf-cd-emoji">${it.emoji}</div>
         <div class="gf-cd-name">${escapeHtml(it.name)}</div>
+        ${yearTxt ? `<div class="gf-cd-year">${yearTxt}</div>` : ''}
         <div class="gf-cd-date">${it.date}</div>
         <div class="gf-cd-dday">${txt}</div>
         ${delBtn}
@@ -1669,7 +1750,11 @@ function renderLele() {
     if (!arr.length) ml.innerHTML = '<div class="empty-state" style="padding:14px 0;">还没有回忆，添加第一段属于你们的记忆吧～</div>';
     else ml.innerHTML = arr.map(m => `<div class="gf-mem">
       <div class="gf-mem-date">${m.date}</div>
-      <div class="gf-mem-text">${escapeHtml(m.name)}</div>
+      ${m.img ? `<img class="gf-mem-img" src="${m.img}" alt="" loading="lazy"/>` : ''}
+      <div class="gf-mem-body">
+        <div class="gf-mem-text">${escapeHtml(m.name)}</div>
+        ${m.note ? `<div class="gf-mem-note">${escapeHtml(m.note)}</div>` : ''}
+      </div>
       <button class="gf-mem-del" data-mem="${m.id}">✕</button>
     </div>`).join('');
   }
@@ -1722,18 +1807,43 @@ if (gfCountdowns) {
   });
 }
 
-/* 回忆录添加 */
+/* 回忆录添加（含图片 + 备注） */
+const gfMemImg = document.getElementById('gfMemImg');
+let gfMemImgData = '';
+if (gfMemImg) {
+  gfMemImg.addEventListener('change', () => {
+    const f = gfMemImg.files && gfMemImg.files[0];
+    if (!f) { gfMemImgData = ''; return; }
+    const r = new FileReader();
+    r.onload = () => {
+      // 压缩到 720px 宽以内，控制 base64 体积，避免本地存储爆掉
+      const img = new Image();
+      img.onload = () => {
+        let { width: w, height: h } = img;
+        const maxW = 720; if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        try { gfMemImgData = cv.toDataURL('image/jpeg', 0.72); } catch (e) { gfMemImgData = r.result; }
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(f);
+  });
+}
 const btnAddGfMem = document.getElementById('btnAddGfMem');
 if (btnAddGfMem) {
   btnAddGfMem.addEventListener('click', () => {
     const date = document.getElementById('gfMemDate').value;
     const name = (document.getElementById('gfMemName').value || '').trim();
+    const note = (document.getElementById('gfMemNote') ? document.getElementById('gfMemNote').value : '').trim();
     if (!name) return toast('请写点什么');
     if (!date) return toast('请选日期');
     S.gfMem = S.gfMem || [];
-    S.gfMem.push({ id: uid(), date, name });
+    S.gfMem.push({ id: uid(), date, name, note, img: gfMemImgData || '' });
     Store.save();
     document.getElementById('gfMemName').value = '';
+    const noteEl = document.getElementById('gfMemNote'); if (noteEl) noteEl.value = '';
+    if (gfMemImg) { gfMemImg.value = ''; gfMemImgData = ''; }
     renderLele();
     toast('已记录一段回忆 💕');
   });
@@ -1806,7 +1916,7 @@ function renderAll() {
   renderDaily();
   renderTodoToday();
   renderFixedSchedule();
-  renderTodos(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
+  renderTodos(); renderCourses(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
   renderWps(); renderReview(); renderSavings(); renderBills();
   renderDouyin(); renderDiet(); renderTravel(); renderLele();
   renderFreq();

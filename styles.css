@@ -491,7 +491,22 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .dy-stat:first-of-type { margin-top: 0; }
 .dy-stat-name { font-size: 12.5px; color: #1a3d5c; font-weight: 600; flex: 1; min-width: 0; }
 .dy-stat-nums { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-sub); white-space: nowrap; }
-.dy-stat-nums span { font-variant-numeric: tabular-nums; }
+  .dy-stat-nums span { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 540px) {
+  /* 抖音创作 · 手机端贴合（用户主要在窄屏手机使用，左侧导航常驻约132-150px，主内容区很窄） */
+  .dy-ip { flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 14px 12px; }
+  .dy-ip-tags { justify-content: center; }
+  .dy-ip-desc { text-align: left; }
+  .dy-case-who, .dy-case-why, .dy-case-tip, .dy-remix-name, .dy-remix-how, .dy-remix-ex, .dy-mat-title, .dy-mat-body { font-size: 11.5px; }
+  .dy-topic-item { font-size: 12px; padding: 7px 10px; }
+  .dy-topic-item .dy-plus { font-size: 10px; }
+  .dy-row-stat { flex-wrap: wrap !important; }
+  .dy-row-stat #dyStatName { flex: 1 1 100% !important; width: 100% !important; }
+  .dy-row-stat #dyStatPlay, .dy-row-stat #dyStatLike, .dy-row-stat #dyStatAdd { flex: 1 1 30% !important; width: auto !important; min-width: 0; }
+  .dy-stat { flex-direction: column; align-items: stretch; gap: 7px; }
+  .dy-stat-nums { justify-content: space-between; white-space: normal; }
+}
 
 @media (max-width: 720px) {
   .vd-stats { grid-template-columns: repeat(2, 1fr); }

@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803k" />
+<link rel="stylesheet" href="styles.css?v=20260803l" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -284,15 +284,35 @@
 
     <!-- ---------- 电脑剪辑 ---------- -->
     <section class="page-section" id="page-video">
-      <div class="page-header"><h1 class="page-title">电脑剪辑</h1><p class="page-subtitle">记录每一段创作过程</p></div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">本周剪辑条数</div><div class="stat-value"><span id="videoCount">0</span><span class="unit">条</span></div></div>
-        <div class="stat-card"><div class="stat-label">本周总时长</div><div class="stat-value"><span id="videoMinutes">0</span><span class="unit">分钟</span></div></div>
-        <div class="stat-card"><div class="stat-label">已完成</div><div class="stat-value"><span id="videoDone">0</span><span class="unit">条</span></div></div>
+      <div class="page-header"><h1 class="page-title">电脑剪辑</h1><p class="page-subtitle">跟着影视飓风，把每一段素材剪出味道</p></div>
+
+      <!-- 顶部统计 -->
+      <div class="vd-stats">
+        <div class="vd-stat"><div class="vd-stat-num"><span id="courseStudying">0</span></div><div class="vd-stat-lab">在学课程</div></div>
+        <div class="vd-stat"><div class="vd-stat-num"><span id="courseDone">0</span></div><div class="vd-stat-lab">已结课</div></div>
+        <div class="vd-stat"><div class="vd-stat-num"><span id="projCount">0</span></div><div class="vd-stat-lab">剪辑项目</div></div>
+        <div class="vd-stat"><div class="vd-stat-num"><span id="projMinutes">0</span><span class="u">分</span></div><div class="vd-stat-lab">累计时长</div></div>
       </div>
-      <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">剪辑项目</div></div>
-        <div class="add-row"><input type="text" class="form-input" id="videoName" placeholder="项目名称" maxlength="40" style="flex:2"/><input type="number" class="form-input" id="videoDur" placeholder="时长(分)" min="1" style="flex:1"/><button class="btn" id="btnAddVideo">+ 添加</button></div>
+
+      <!-- 课程追踪 -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head"><div class="card-title">🎓 课程学习</div><div class="card-progress">跟着影视飓风</div></div>
+        <div id="courseList" class="course-list"></div>
+        <div class="add-row" style="margin-top:12px;">
+          <input type="text" class="form-input" id="courseName" placeholder="加一门课 例：达芬奇调色入门" maxlength="40" style="flex:2"/>
+          <input type="number" class="form-input" id="courseTotal" placeholder="总节数" min="1" style="flex:1"/>
+          <button class="btn" id="btnAddCourse">+ 加课</button>
+        </div>
+      </div>
+
+      <!-- 剪辑项目 -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head"><div class="card-title">🎞 剪辑项目</div><div class="card-progress"><span id="projDone">0</span>/<span id="projTotal">0</span> 已完成</div></div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="videoName" placeholder="项目名 例：旅行 vlog 第一集" maxlength="40" style="flex:2"/>
+          <input type="number" class="form-input" id="videoDur" placeholder="时长(分)" min="1" style="flex:1"/>
+          <button class="btn" id="btnAddVideo">+ 添加</button>
+        </div>
         <div id="videoList"></div>
       </div>
     </section>
@@ -695,6 +715,10 @@
           <input type="text" class="form-input" id="gfMemName" placeholder="那天发生了什么 例：第一次牵手" maxlength="40" style="flex:2"/>
           <button class="btn" id="btnAddGfMem">+ 添加</button>
         </div>
+        <div class="add-row" style="margin-top:10px;">
+          <input type="file" accept="image/*" class="form-input" id="gfMemImg" style="flex:2"/>
+          <input type="text" class="form-input" id="gfMemNote" placeholder="备注（选填）" maxlength="80" style="flex:2"/>
+        </div>
         <div id="gfMemoryList" class="gf-mem-list"></div>
       </div>
     </section>
@@ -788,7 +812,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803k"></script>
-<script src="app.js?v=20260803k"></script>
+<script src="cet6words.js?v=20260803l"></script>
+<script src="app.js?v=20260803l"></script>
 </body>
 </html>

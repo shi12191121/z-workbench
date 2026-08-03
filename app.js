@@ -54,7 +54,7 @@ function defaultState() {
     videos: [], english: [], fitness: [], basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
-    douyin: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
+    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
     courses: [], videos: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
@@ -1730,7 +1730,63 @@ if ($('#bTodayIncome')) $('#bTodayIncome').addEventListener('keydown', e => { if
 // 计算器按钮（不接真实计算器，仅做提示，避免破坏其他功能）
 if ($('#billCalc')) $('#billCalc').onclick = () => toast('记账小工具 · 直接在金额框输入即可');
 
-/* 抖音创作 */
+/* ============== 抖音创作 · 河南师大IP ============== */
+const DY_CASES = [
+  { who: '小烙学长（58万粉·大学生成长）', why: '标题用「数字+否定词」直击痛点，如《简历上的3个致命错误，90%的人都犯了》；内容用「反面教材+解决方案」对比，降低理解成本。', tip: '做「新生办校园卡3个坑」「大一别踩的5个雷」系列，套同款标题公式。' },
+  { who: '为铭学长（985计算机硕士）', why: '不做完美学霸，做「陪你踩坑的过来人」，分享真实崩溃与逆袭，拉满共鸣。', tip: '拍「我大一差点挂科的真相」「学长也迷茫」真人真事，比说教更吸粉。' },
+  { who: '中南学霸高宇恒（AI建模脸）', why: '「颜值+学霸+高考加油」三重标签叠加，高考季情绪共鸣破圈，一个月从校园火到全网。', tip: '录取季做「河南师大帅学长为2026新生加油」，卡高考 / 报到节点。' },
+  { who: '高考季赛博茶话会（无印 / 冷酷小咕）', why: '「知识+情感」复合模式，学长学姐平等交流而非说教，给稀缺的情绪陪伴。', tip: '评论区收集新生问题，做「回答学弟学妹100问」系列，强互动引流。' },
+];
+const DY_FAILS = [
+  '纯搬运 / 二传无个人视角：别人看原版就行，没有关注你的理由。',
+  '标题党无干货：点进来发现没用，完播率低、掉粉。',
+  '完美人设说教：像辅导员念稿，年轻人直接划走。',
+  '更新断更：算法不持续推，粉丝慢慢流失。',
+  '不回评论不互动：错过「评论区提问 → 加微信」的引流机会。',
+  '一上来硬广校园卡：被当微商，信任瞬间崩塌。',
+];
+const DY_TOPICS = [
+  { cat: '🎓 新生必看', items: [
+    '河南师大2026录取分数线 / 位次（按你的省份讲）',
+    '一校三区怎么分？建设路 / 平原湖 / 科技创新港区别',
+    '宿舍实拍：6-8人间、空调暖气、独立卫浴',
+    '新生办校园卡 / 电话卡避坑（顺带你的兼职）',
+    '学费 & 奖学金 & 绿色通道全攻略',
+    '报到Day1到底先干啥（流程vlog）',
+  ]},
+  { cat: '🏫 校园日常', items: [
+    '化学专业的一天vlog（实验 / 试剂 / 数据）',
+    '万人餐厅吃什么（食堂测评）',
+    '图书馆 / 自习室抢座攻略',
+    '社团 / 学生会值不值得加',
+  ]},
+  { cat: '💬 学长真心话', items: [
+    '大一别踩的5个坑',
+    '化学专业就业 / 考研真相（保研率7.31%）',
+    '学长也迷茫：如何找自己的方向',
+  ]},
+  { cat: '💳 校园卡变现（软性）', items: [
+    '校园卡怎么选不踩雷',
+    '办卡送什么福利（你的兼职卖点）',
+    '加学长微信，帮你算哪种套餐最划算',
+  ]},
+];
+const DY_REMIX = [
+  { name: '沉浸式入学vlog', how: '一镜到底逛校园 / 宿舍，轻音乐 + 字幕，制造「我也想来」的代入感。', ex: '《30秒带你看河南师大建设路校区》' },
+  { name: '评论区点名回答', how: '把粉丝问题做成「学长回答你」系列，强互动、自然引流加微信。', ex: '《评论区问爆的：宿舍真的有空调吗？》' },
+  { name: '宿舍好物开箱', how: '展示宿舍神器，软植入你的校园卡 / 生活用品。', ex: '《大一宿舍必入的5件神器》' },
+  { name: '一分钟避坑', how: '快节奏卡点，「新生别做X」系列，完播率高。', ex: '《新生办卡，这3个坑千万别踩》' },
+  { name: '学长的一天', how: '固定栏目培养追更习惯，人设更立体。', ex: '《化学学长的早八日常》' },
+];
+const DY_MAT_SEED = [
+  { tag: '招生', title: '2026面向31省招10650人，略增', body: '新增地方专项、优师计划公费师范生；省外计划略增。录取进行中（7-8月），新生最关心校区 / 宿舍 / 办卡。' },
+  { tag: '学科', title: '化学、物理为「双一流」创建学科', body: '7个学科进入ESI全球前1%（数学、物理、化学、工程学、材料科学、环境/生态学、植物与动物科学）。化学是你的专业，可重点打。' },
+  { tag: '生活', title: '宿舍6-8人间·空调+暖气·独立卫浴', body: '住宿费400-900元/年；万人餐厅、民族餐厅。新生高频关注点，适合实拍。' },
+  { tag: '费用', title: '学费 & 资助', body: '理工3700/年、文史3400、艺术5700、中外合作15000；国家奖学金8000、励志5000、助学金+绿色通道。' },
+  { tag: '信息', title: '招生网 & 电话', body: '招生网 https://www.htu.cn/zs/ 电话0373-3326191/3326836/3326633/3326839。做「录取查询教程」视频很实用。' },
+  { tag: '数据', title: '保研率7.31%·80个本科专业·34个国家一流', body: '可做「河南师大值不值得报」客观向内容，建立专业人设。' },
+];
+
 function renderDouyin() {
   $('#dyWeek').textContent = S.douyin.filter(x => inWeek(x.date)).length;
   $('#dyTotal').textContent = S.douyin.length;
@@ -1740,8 +1796,53 @@ function renderDouyin() {
       <div class="task-checkbox ${v.done ? 'checked' : ''}" data-dy="${v.id}"></div>
       <div class="li-main"><div class="li-title" style="${v.done?'text-decoration:line-through;color:#718096':''}">${escapeHtml(v.name)}</div><div class="li-sub">📱 ${v.plat} · ${v.date}</div></div>
       <button class="icon-btn" data-dd="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
-    </div>`, '还没有创作清单，添加一个灵感吧～');
+    </div>`, '还没有创作清单，从上方选题库加一个吧～');
 }
+function renderDouyinStatic() {
+  const cs = document.getElementById('dyCases'); if (cs) cs.innerHTML = DY_CASES.map(c => `
+    <div class="dy-case">
+      <div class="dy-case-who">${escapeHtml(c.who)}</div>
+      <div class="dy-case-why"><b>为什么火：</b>${escapeHtml(c.why)}</div>
+      <div class="dy-case-tip"><b>你能借鉴：</b>${escapeHtml(c.tip)}</div>
+    </div>`).join('');
+  const fl = document.getElementById('dyFails'); if (fl) fl.innerHTML = DY_FAILS.map(f => `<li>${escapeHtml(f)}</li>`).join('');
+  const tp = document.getElementById('dyTopics'); if (tp) tp.innerHTML = DY_TOPICS.map(g => `
+    <div class="dy-topic-cat">${escapeHtml(g.cat)}</div>
+    <div class="dy-topic-items">${g.items.map(t => `<button class="dy-topic-item" data-topic="${escapeHtml(t)}">${escapeHtml(t)}<span class="dy-plus">＋清单</span></button>`).join('')}</div>`).join('');
+  const rm = document.getElementById('dyRemix'); if (rm) rm.innerHTML = DY_REMIX.map(r => `
+    <div class="dy-remix">
+      <div class="dy-remix-name">${escapeHtml(r.name)}</div>
+      <div class="dy-remix-how">${escapeHtml(r.how)}</div>
+      <div class="dy-remix-ex">示例：${escapeHtml(r.ex)}</div>
+    </div>`).join('');
+}
+function renderDyMaterial() {
+  if (S.dyMaterial === undefined) { S.dyMaterial = DY_MAT_SEED.slice(); S.dyMatUpdated = todayKey(); }
+  const upd = document.getElementById('dyMatUpdated'); if (upd) upd.textContent = '更新于 ' + (S.dyMatUpdated || todayKey());
+  const wrap = document.getElementById('dyMaterial'); if (!wrap) return;
+  if (!S.dyMaterial.length) { wrap.innerHTML = '<div class="empty-state" style="padding:12px 0;">还没有素材，收到每日播报后贴这里～</div>'; return; }
+  wrap.innerHTML = S.dyMaterial.map((m, i) => `
+    <div class="dy-mat">
+      <span class="dy-mat-tag">${escapeHtml(m.tag || '素材')}</span>
+      <div class="dy-mat-main"><div class="dy-mat-title">${escapeHtml(m.title)}</div>${m.body ? `<div class="dy-mat-body">${escapeHtml(m.body)}</div>` : ''}</div>
+      <button class="icon-btn" data-dm="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
+    </div>`).join('');
+}
+function renderDyStats() {
+  const wrap = document.getElementById('dyStats'); if (!wrap) return;
+  const arr = S.dyStats || [];
+  if (!arr.length) { wrap.innerHTML = '<div class="empty-state" style="padding:12px 0;">记录第一条视频数据，看哪个选题爆～</div>'; return; }
+  const tp = arr.reduce((s, v) => s + (+v.play || 0), 0), tl = arr.reduce((s, v) => s + (+v.like || 0), 0), ta = arr.reduce((s, v) => s + (+v.add || 0), 0);
+  const sum = `<div class="dy-stat-sum">总播放 <b>${tp}</b> · 总点赞 <b>${tl}</b> · 总加微 <b>${ta}</b></div>`;
+  const list = arr.map((v, i) => `
+    <div class="dy-stat">
+      <div class="dy-stat-name">${escapeHtml(v.name)}</div>
+      <div class="dy-stat-nums"><span>▶ ${v.play || 0}</span><span>❤ ${v.like || 0}</span><span>➕ ${v.add || 0}</span>
+      <button class="icon-btn" data-ds="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>
+    </div>`).join('');
+  wrap.innerHTML = sum + list;
+}
+
 $('#btnAddDy').onclick = () => {
   const name = $('#dyName').value.trim(), plat = $('#dyPlat').value;
   if (!name) return toast('请输入作品主题');
@@ -1751,6 +1852,41 @@ $('#btnAddDy').onclick = () => {
 $('#dyList').addEventListener('click', e => {
   const tg = e.target.closest('[data-dy]'); if (tg) { const v = S.douyin.find(x => x.id === +tg.dataset.dy); if (v) { v.done = !v.done; Store.save(); renderDouyin(); } return; }
   const dl = e.target.closest('[data-dd]'); if (dl) { S.douyin = S.douyin.filter(x => x.id !== +dl.dataset.dd); Store.save(); renderDouyin(); renderNineGrid(); toast('已删除'); }
+});
+$('#btnCopyHook').onclick = () => {
+  const t = document.getElementById('dyHook').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => toast('话术已复制'), () => fallbackCopy(t));
+  else fallbackCopy(t);
+};
+function fallbackCopy(t) { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('话术已复制'); } catch (e) { toast('复制失败，请手动复制'); } document.body.removeChild(ta); }
+$('#dyTopics').addEventListener('click', e => {
+  const b = e.target.closest('[data-topic]'); if (!b) return;
+  S.douyin.push({ id: uid(), name: b.dataset.topic, plat: '抖音', done: false, date: todayKey() });
+  Store.save(); renderDouyin(); renderNineGrid(); toast('已加入创作清单');
+});
+$('#btnAddMat').onclick = () => {
+  const title = $('#dyMatTitle').value.trim(), body = $('#dyMatBody').value.trim();
+  if (!title) return toast('请输入素材标题');
+  if (!S.dyMaterial) S.dyMaterial = [];
+  S.dyMaterial.unshift({ tag: '自加', title, body });
+  S.dyMatUpdated = todayKey(); Store.save();
+  $('#dyMatTitle').value = ''; $('#dyMatBody').value = ''; renderDyMaterial(); toast('已添加素材');
+};
+$('#dyMaterial').addEventListener('click', e => {
+  const b = e.target.closest('[data-dm]'); if (!b) return;
+  S.dyMaterial.splice(+b.dataset.dm, 1); S.dyMatUpdated = todayKey(); Store.save(); renderDyMaterial();
+});
+$('#btnAddStat').onclick = () => {
+  const name = $('#dyStatName').value.trim(); if (!name) return toast('请输入视频主题');
+  const play = +$('#dyStatPlay').value || 0, like = +$('#dyStatLike').value || 0, add = +$('#dyStatAdd').value || 0;
+  S.dyStats = S.dyStats || [];
+  S.dyStats.unshift({ name, play, like, add, date: todayKey() }); Store.save();
+  $('#dyStatName').value = ''; $('#dyStatPlay').value = ''; $('#dyStatLike').value = ''; $('#dyStatAdd').value = '';
+  renderDyStats(); toast('已记录');
+};
+$('#dyStats').addEventListener('click', e => {
+  const b = e.target.closest('[data-ds]'); if (!b) return;
+  S.dyStats.splice(+b.dataset.ds, 1); Store.save(); renderDyStats();
 });
 
 /* 饮食作息 */
@@ -2060,7 +2196,7 @@ function renderAll() {
   renderTodos(); renderCourses(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
   renderStudyTimer();
   renderWps(); renderReview(); renderSavings(); renderBills();
-  renderDouyin(); renderDiet(); renderTravel(); renderLele();
+  renderDouyin(); renderDouyinStatic(); renderDyMaterial(); renderDyStats(); renderDiet(); renderTravel(); renderLele();
   renderFreq();
   renderSyncBadge();
   updateTodoPageSub();

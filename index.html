@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803j" />
+<link rel="stylesheet" href="styles.css?v=20260803k" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -93,7 +93,7 @@
     <nav class="nav" id="nav">
       <div class="nav-item active" data-page="growth"><span class="nav-emoji">🌟</span><span>今日成长</span></div>
       <div class="nav-item" data-page="todo"><span class="nav-emoji">✅</span><span>今日待办</span></div>
-      <div class="nav-item" data-page="lele"><span class="nav-emoji lele-emoji">🐾</span><span>乐乐宝宝</span></div>
+      <div class="nav-item" data-page="lele"><span class="nav-emoji lele-emoji">💕</span><span>乐乐宝宝</span></div>
       <div class="nav-item" data-page="video"><span class="nav-emoji">🎬</span><span>电脑剪辑</span></div>
       <div class="nav-item" data-page="english"><span class="nav-emoji">📖</span><span>英语学习</span></div>
       <div class="nav-item" data-page="fitness"><span class="nav-emoji">💪</span><span>健身计划</span></div>
@@ -637,33 +637,65 @@
       </div>
     </section>
 
-    <!-- ---------- 乐乐宝宝 ---------- -->
+    <!-- ---------- 乐乐宝宝（女朋友） ---------- -->
     <section class="page-section" id="page-lele">
-      <div class="page-header"><h1 class="page-title">乐乐宝宝 🐾 <span class="sparkle">✦</span></h1><p class="page-subtitle">把生活里的小柔软，也放进工作台</p></div>
+      <div class="page-header"><h1 class="page-title">乐乐宝宝 💕 <span class="sparkle">✦</span></h1><p class="page-subtitle">把和你有关的每一天，都好好收着</p></div>
 
-      <div class="card lele-hero">
-        <div class="lele-avatar">🐾</div>
-        <div class="lele-quote">今天的小乐乐，也被你惦记着</div>
-        <div class="lele-sub">记录它的小瞬间 · 体重 · 心情 · 糗事</div>
+      <!-- 顶部 Hero：在一起天数 -->
+      <div class="card gf-hero">
+        <div class="gf-hearts">💕 💗 💕</div>
+        <div class="gf-days" id="gfDays">0</div>
+        <div class="gf-days-label">我们已经在一起 · 天</div>
+        <div class="gf-meta">
+          <span class="gf-meta-item">💞 <b>2025-12-19</b> 在一起</span>
+          <span class="gf-meta-sep">|</span>
+          <span class="gf-meta-item">🎂 农历 <b>9-28</b> 她的生日</span>
+        </div>
       </div>
 
+      <!-- 4 个重要日子倒计时 -->
       <div class="card" style="margin-top:16px;">
         <div class="card-head">
-          <div class="card-title">📔 乐乐日记</div>
-          <div class="card-progress"><span id="leleCount">0</span> 条</div>
+          <div class="card-title">📅 重要日子倒计时</div>
+        </div>
+        <div class="gf-countdowns" id="gfCountdowns"></div>
+        <!-- 自定义纪念日添加 -->
+        <div class="add-row gf-cust-row">
+          <input type="text" class="form-input" id="gfCustEmoji" placeholder="图标" maxlength="2" style="flex:0 0 50px; text-align:center;"/>
+          <input type="text" class="form-input" id="gfCustName" placeholder="纪念日名 例：初吻纪念日" maxlength="20" style="flex:2"/>
+          <input type="date" class="form-input" id="gfCustDate" style="flex:1.4"/>
+          <button class="btn" id="btnAddGfCust">+ 添加</button>
+        </div>
+      </div>
+
+      <!-- 今日互动打卡 -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <div class="card-title">🌸 今日小互动</div>
+          <div class="card-progress"><span id="gfInteractCount">0</span> / 6 已做</div>
+        </div>
+        <div class="gf-checks" id="gfChecks">
+          <button class="gf-check" data-key="morning">☀️<span>早安</span></button>
+          <button class="gf-check" data-key="night">🌙<span>晚安</span></button>
+          <button class="gf-check" data-key="call">📞<span>电话</span></button>
+          <button class="gf-check" data-key="video">📹<span>视频</span></button>
+          <button class="gf-check" data-key="miss">💭<span>想她</span></button>
+          <button class="gf-check" data-key="meet">🤗<span>见面</span></button>
+        </div>
+      </div>
+
+      <!-- 回忆录 -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <div class="card-title">📔 我们的回忆录</div>
+          <div class="card-progress"><span id="gfMemoryCount">0</span> 条</div>
         </div>
         <div class="add-row">
-          <input type="text" class="form-input" id="leleName" placeholder="小事件 例：今天吃了一整根磨牙棒" maxlength="60" style="flex:2"/>
-          <select class="form-input" id="leleMood" style="flex:0 0 100px">
-            <option value="开心">😺 开心</option>
-            <option value="撒娇">🥺 撒娇</option>
-            <option value="贪吃">🍗 贪吃</option>
-            <option value="犯困">😴 犯困</option>
-            <option value="捣乱">🙀 捣乱</option>
-          </select>
-          <button class="btn" id="btnAddLele">+ 记录</button>
+          <input type="date" class="form-input" id="gfMemDate" style="flex:0 0 130px"/>
+          <input type="text" class="form-input" id="gfMemName" placeholder="那天发生了什么 例：第一次牵手" maxlength="40" style="flex:2"/>
+          <button class="btn" id="btnAddGfMem">+ 添加</button>
         </div>
-        <div id="leleList"></div>
+        <div id="gfMemoryList" class="gf-mem-list"></div>
       </div>
     </section>
 
@@ -756,7 +788,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803j"></script>
-<script src="app.js?v=20260803j"></script>
+<script src="cet6words.js?v=20260803k"></script>
+<script src="app.js?v=20260803k"></script>
 </body>
 </html>

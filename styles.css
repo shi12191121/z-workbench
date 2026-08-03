@@ -375,7 +375,54 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .stat-value { font-size: 24px; font-weight: 700; color: var(--text-title); margin-top: 6px; }
 .stat-value .unit { font-size: 13px; color: var(--text-sub); font-weight: 500; margin-left: 4px; }
 
-.list-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--grad-fog); border-radius: var(--radius-md); margin-bottom: 8px; transition: all .2s; }
+/* ============ 电脑剪辑（高级感重做） ============ */
+.vd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.vd-stat {
+  background: linear-gradient(135deg, #f4f9fd 0%, #e7f2fb 100%);
+  border: 1px solid rgba(99,168,224,0.14); border-radius: 14px;
+  padding: 14px 8px; text-align: center;
+}
+.vd-stat-num { font-size: 22px; font-weight: 800; color: #1a3d5c; font-variant-numeric: tabular-nums; }
+.vd-stat-num .u { font-size: 11px; color: var(--text-sub); font-weight: 500; margin-left: 2px; }
+.vd-stat-lab { font-size: 11px; color: var(--text-sub); margin-top: 3px; }
+
+.course-list { display: flex; flex-direction: column; gap: 12px; }
+.course-card {
+  border: 1px solid rgba(99,168,224,0.16); border-radius: 16px; padding: 14px 16px;
+  background: #fff; transition: box-shadow .2s; position: relative; overflow: hidden;
+}
+.course-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, #63a8e0, #9ec9ef);
+}
+.course-card.done::before { background: linear-gradient(180deg, #7fc8a0, #b6e3c8); }
+.course-card.done { background: #f6fbf8; }
+.course-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.course-name { font-size: 14.5px; font-weight: 700; color: #14304d; }
+.course-del { background: transparent; border: none; color: var(--text-sub); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 8px; }
+.course-del:hover { color: #c75a5a; background: rgba(199,90,90,0.08); }
+.course-bar { height: 6px; border-radius: 999px; background: rgba(99,168,224,0.14); margin: 12px 0 10px; overflow: hidden; }
+.course-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #63a8e0, #4a90d9); transition: width .35s ease; }
+.course-card.done .course-fill { background: linear-gradient(90deg, #7fc8a0, #5cb585); }
+.course-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.course-prog { font-size: 12.5px; color: var(--text-sub); }
+.course-prog b { color: #1a3d5c; font-weight: 700; }
+.course-card.done .course-prog { color: #3f9e6e; font-weight: 600; }
+.course-ctrl { display: flex; align-items: center; gap: 6px; }
+.course-step, .course-set, .course-finish {
+  border: 1px solid rgba(99,168,224,0.25); background: #fff; color: #1a3d5c;
+  border-radius: 9px; cursor: pointer; font-size: 14px; line-height: 1; padding: 7px 11px;
+  transition: all .15s; -webkit-tap-highlight-color: transparent;
+}
+.course-step:active, .course-set:active { transform: scale(0.93); }
+.course-step:disabled { opacity: .35; cursor: not-allowed; }
+.course-set { font-size: 13px; padding: 7px 9px; }
+.course-finish { font-size: 12px; font-weight: 600; padding: 7px 12px; }
+.course-finish.on { background: linear-gradient(135deg, #7fc8a0, #5cb585); color: #fff; border-color: transparent; }
+
+@media (max-width: 720px) {
+  .vd-stats { grid-template-columns: repeat(2, 1fr); }
+}
 .list-item:hover { background: #e8f4fd; }
 .list-item .li-main { flex: 1; }
 .list-item .li-title { color: var(--text-title); font-size: 14px; font-weight: 600; }
@@ -584,6 +631,7 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .gf-cd:active { transform: scale(0.97); }
 .gf-cd-emoji { font-size: 28px; line-height: 1.1; }
 .gf-cd-name { font-size: 13px; color: #1a3d5c; font-weight: 600; margin-top: 4px; }
+.gf-cd-year { font-size: 11px; color: #b02860; font-weight: 700; margin-top: 2px; opacity: .9; }
 .gf-cd-date { font-size: 11px; color: rgba(26,61,92,0.6); margin-top: 2px; }
 .gf-cd-dday { font-size: 14px; color: #1a6090; font-weight: 700; margin-top: 6px; }
 .gf-cd-today { background: linear-gradient(135deg, #ffe0ec 0%, #ffc1d8 100%); border-color: rgba(229,99,153,0.3); }
@@ -623,6 +671,9 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .gf-mem:last-child { border-bottom: none; }
 .gf-mem-date { flex: 0 0 100px; font-size: 12px; color: #1a6090; font-weight: 600; }
 .gf-mem-text { flex: 1; font-size: 13.5px; color: var(--text-title); }
+.gf-mem-body { flex: 1; min-width: 0; }
+.gf-mem-note { font-size: 12px; color: var(--text-sub); margin-top: 3px; line-height: 1.45; word-break: break-word; }
+.gf-mem-img { flex: 0 0 64px; width: 64px; height: 64px; object-fit: cover; border-radius: 10px; align-self: flex-start; box-shadow: 0 1px 4px rgba(26,61,92,0.15); }
 .gf-mem-del { background: transparent; border: none; color: var(--text-sub); cursor: pointer; padding: 4px 8px; border-radius: 8px; font-size: 13px; }
 .gf-mem-del:hover { color: #c75a5a; background: rgba(199,90,90,0.08); }
 

@@ -559,6 +559,79 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .lele-item .li-del { font-size: 12px; color: var(--text-sub); padding: 4px 10px; border-radius: 8px; }
 .lele-item .li-del:hover { color: #c75a5a; background: rgba(199,90,90,0.08); }
 
+/* ============ 乐乐宝宝（女朋友） ============ */
+.gf-hero {
+  background: linear-gradient(135deg, #ffd5e5 0%, #ffb8d0 50%, #c9e0f5 100%);
+  color: #5a1f3a;
+  text-align: center; padding: 32px 20px 24px;
+  position: relative; overflow: hidden;
+}
+.gf-hearts { font-size: 22px; margin-bottom: 6px; letter-spacing: 4px; animation: leleBounce 2.4s ease-in-out infinite; }
+.gf-days { font-size: 64px; font-weight: 800; line-height: 1; color: #b02860; text-shadow: 0 2px 8px rgba(176,40,96,0.18); }
+.gf-days-label { font-size: 14px; opacity: .85; margin-top: 4px; }
+.gf-meta { margin-top: 14px; font-size: 12.5px; opacity: .85; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.gf-meta-item b { color: #b02860; }
+.gf-meta-sep { opacity: .5; }
+
+/* 倒计时卡片 */
+.gf-countdowns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px; }
+.gf-cd {
+  background: linear-gradient(135deg, #eaf3fb 0%, #d6e9f7 100%);
+  border-radius: 14px; padding: 14px 12px; text-align: center;
+  position: relative; border: 1px solid rgba(99,168,224,0.15);
+  transition: transform .15s;
+}
+.gf-cd:active { transform: scale(0.97); }
+.gf-cd-emoji { font-size: 28px; line-height: 1.1; }
+.gf-cd-name { font-size: 13px; color: #1a3d5c; font-weight: 600; margin-top: 4px; }
+.gf-cd-date { font-size: 11px; color: rgba(26,61,92,0.6); margin-top: 2px; }
+.gf-cd-dday { font-size: 14px; color: #1a6090; font-weight: 700; margin-top: 6px; }
+.gf-cd-today { background: linear-gradient(135deg, #ffe0ec 0%, #ffc1d8 100%); border-color: rgba(229,99,153,0.3); }
+.gf-cd-today .gf-cd-dday { color: #b02860; }
+.gf-cd-past { opacity: .55; }
+.gf-cd-del { position: absolute; top: 4px; right: 4px; background: rgba(255,255,255,0.7); border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; color: #c75a5a; cursor: pointer; line-height: 1; }
+.gf-cd-del:hover { background: #fff; }
+.gf-cust-row { margin-top: 12px; }
+
+/* 今日互动打卡 */
+.gf-checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.gf-check {
+  background: linear-gradient(135deg, #f5fafe 0%, #e8f1f9 100%);
+  border: 1px solid rgba(99,168,224,0.2);
+  border-radius: 14px; padding: 14px 8px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 13px; color: #1a3d5c; font-weight: 500;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.gf-check span { font-size: 12px; }
+.gf-check .gf-check-emoji, .gf-check { font-size: 22px; }
+.gf-check:active { transform: scale(0.95); }
+.gf-check.on {
+  background: linear-gradient(135deg, #ffd5e5 0%, #ffb8d0 100%);
+  border-color: rgba(229,99,153,0.4);
+  color: #b02860; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(229,99,153,0.2);
+}
+
+/* 回忆录 */
+.gf-mem-list { margin-top: 4px; }
+.gf-mem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 4px; border-bottom: 1px dashed rgba(99,168,224,0.18);
+}
+.gf-mem:last-child { border-bottom: none; }
+.gf-mem-date { flex: 0 0 100px; font-size: 12px; color: #1a6090; font-weight: 600; }
+.gf-mem-text { flex: 1; font-size: 13.5px; color: var(--text-title); }
+.gf-mem-del { background: transparent; border: none; color: var(--text-sub); cursor: pointer; padding: 4px 8px; border-radius: 8px; font-size: 13px; }
+.gf-mem-del:hover { color: #c75a5a; background: rgba(199,90,90,0.08); }
+
+@media (max-width: 720px) {
+  .gf-countdowns { grid-template-columns: 1fr; }
+  .gf-checks { grid-template-columns: repeat(3, 1fr); }
+  .gf-days { font-size: 52px; }
+}
+
 /* ============ 今日待办页（仿参考图 1:1）============ */
 #page-todo { padding-bottom: 30px; }
 .td-page-head { margin: 2px 0 18px; }

@@ -691,20 +691,24 @@ function enCountdown() {
 // ---- 唤起 APP 的通用工具 ----
 function isAndroid() { return /android/i.test(navigator.userAgent); }
 function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-// 把 B站网页链接转成 APP 深链 scheme
+// 把 B站网页链接转成 APP 深链 scheme（合集/视频/搜索/UP主主页）
 function biliSchemeFromUrl(url) {
   if (!url) return null;
   let m;
+  if ((m = url.match(/space\.bilibili\.com\/(\d+)\/channel\/(?:collectiondetail|seriesmore)\?sid=(\d+)/)))
+    return 'bilibili://space/' + m[1] + '/channel/' + m[2] + '?sid=' + m[3];
   if ((m = url.match(/space\.bilibili\.com\/(\d+)/))) return 'bilibili://space/' + m[1];
   if ((m = url.match(/bilibili\.com\/video\/(BV[\w]+)/i))) return 'bilibili://video/' + m[1];
   if ((m = url.match(/search\.bilibili\.com\/all\?keyword=([^&]+)/i))) return 'bilibili://search?keyword=' + m[1];
-  return null;
+  return null; // b23.tv 等 App Link 短链返回 null，由调用处直接打开（安卓会直接唤起 APP，无选择器）
 }
-// 安卓：用 intent 按包名直接唤起已装 APP，未装则跳应用市场（不会弹下载网页）
-function toIntent(scheme, pkg) {
-  const s = scheme.split(':')[0];
-  const data = scheme.replace(/^[a-z0-9]+:\/\//i, '');
-  return `intent://${data}#Intent;package=${pkg};scheme=${s};end`;
+// 安卓：用 intent 按包名 + 深链直接唤起已装 APP；未装则走 fallback（网页）
+function toIntent(scheme, pkg, fallback) {
+  const m = scheme.match(/^([a-z0-9]+):\/\/(.*)$/i);
+  const s = m ? m[1] : '';
+  const data = m ? m[2] : scheme;
+  const fb = fallback ? ';S.browser_fallback_url=' + encodeURIComponent(fallback) : '';
+  return `intent://${data}#Intent;action=android.intent.action.VIEW;package=${pkg};scheme=${s}${fb};end`;
 }
 
 // 跳转"不背单词"APP（直接唤起已安装的 APP，不弹下载页）
@@ -720,8 +724,8 @@ function openBbdc() {
   document.addEventListener('visibilitychange', onHide);
 
   if (isAndroid()) {
-    // 直接按包名唤起已装 APP：cn.com.langeasy.LangEasyLexis（scheme bbdc://）
-    location.href = toIntent('bbdc://', 'cn.com.langeasy.LangEasyLexis');
+    // 按包名直接唤起已装 APP（不依赖 scheme，最稳）；未装则降级到官网
+    location.href = 'intent://#Intent;package=cn.com.langeasy.LangEasyLexis;S.browser_fallback_url=' + encodeURIComponent('https://www.bbdc.cn/') + ';end';
   } else if (isIOS()) {
     location.href = 'bbdc://';
     // iOS 未唤起则 2s 后跳官方页（会引导到 App Store），避免直接弹下载网页
@@ -731,45 +735,50 @@ function openBbdc() {
   }
 }
 
-// 跳转 B 站：优先唤起 APP，未装/桌面则开网页
+// 跳转 B 站：唤起 APP 到六级搜索，未装则开网页
 function openBili() {
   const url = 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('英语六级');
   const scheme = 'bilibili://search?keyword=' + encodeURIComponent('英语六级');
-  if (isAndroid()) location.href = toIntent(scheme, 'tv.danmaku.bili');
+  if (isAndroid()) location.href = toIntent(scheme, 'tv.danmaku.bili', url);
   else window.open(url, '_blank');
 }
-// 点"去看"：唤起 B站 APP 看具体课程
+// 点"去看"：唤起 B站 APP 看具体合集/视频；b23.tv 等 App Link 直接打开（无"同意打开"弹窗）
 function goBili(url) {
-  const scheme = biliSchemeFromUrl(url);
-  if (isAndroid() && scheme) location.href = toIntent(scheme, 'tv.danmaku.bili');
-  else window.open(url, '_blank');
+  if (isAndroid()) {
+    const scheme = biliSchemeFromUrl(url);
+    if (scheme) { location.href = toIntent(scheme, 'tv.danmaku.bili', url); return; }
+    location.href = url; // b23.tv 等：安卓 App Link 直接唤起 APP
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 // 抖音/B站口碑推荐的六级老师（按试卷板块分类，含刘晓燕；填词题/段落匹配单列）
+// 链接均指向真实「合集/视频合集」，点开直接进哔哩哔哩 APP 看合集（可选手第1/2/…个视频）
 const EN_BILI_RECOMMEND = {
   '听力': [
-    { name: '烤鸭TV · 六级听力合集（视听一致+同转，零基础首选）', url: 'https://space.bilibili.com/491240131' },
-    { name: '温岚之四六级 · 听力场景化带练', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('温岚之四六级 听力') },
+    { name: '烤鸭TV · 六级听力合集（视听一致+同转，零基础首选）', url: 'https://b23.tv/sppcI2w' },
+    { name: '温岚之四六级 · 六级听力带练', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('温岚之六级听力') },
   ],
   '选词填空（填词题）': [
-    { name: '刘晓燕 · 六级词汇/语法速成（填空保分）', url: 'https://space.bilibili.com/490340432/' },
-    { name: '于妙然四六级 · 选词填空解题方法', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 选词填空') },
+    { name: '刘晓燕 · 六级词汇/语法速成（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
+    { name: '于妙然四六级 · 选词填空解题方法', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级选词填空') },
   ],
   '段落匹配（长篇阅读）': [
-    { name: '我是瑞斯拜 · 段落匹配/长篇阅读技巧', url: 'https://space.bilibili.com/11021614' },
-    { name: '于妙然四六级 · 长篇阅读匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 长篇阅读 段落匹配') },
+    { name: '我是瑞斯拜 · 长篇阅读/段落匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('我是瑞斯拜六级长篇阅读段落匹配') },
+    { name: '于妙然四六级 · 长篇阅读匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级长篇阅读段落匹配') },
   ],
   '仔细阅读': [
-    { name: '我是瑞斯拜 · 仔细阅读满分逻辑', url: 'https://space.bilibili.com/11021614' },
-    { name: '于妙然四六级 · 仔细阅读定位技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 仔细阅读') },
+    { name: '我是瑞斯拜 · 六级仔细阅读绝密技巧（合集）', url: 'https://www.bilibili.com/video/BV11gEWzBEE2/' },
+    { name: '于妙然四六级 · 仔细阅读定位技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级仔细阅读') },
   ],
   '写作': [
-    { name: '刘晓燕 · 六级写作功能句/万能模板', url: 'https://space.bilibili.com/490340432/' },
-    { name: '石雷鹏 · 六级作文功能句带写', url: 'https://www.bilibili.com/video/BV1GG411N7hf/' },
+    { name: '刘晓燕 · 六级写作功能句/万能模板（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
+    { name: '石雷鹏 · 六级作文功能句带写', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('石雷鹏六级写作') },
   ],
   '翻译': [
-    { name: '刘晓燕 · 六级翻译逐句拆解', url: 'https://space.bilibili.com/490340432/' },
-    { name: '邹老师四六级翻译 · 汉译英拆解', url: 'https://space.bilibili.com/286901034' },
+    { name: '刘晓燕 · 六级翻译逐句拆解（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
+    { name: '邹老师四六级翻译 · 汉译英拆解（合集）', url: 'https://space.bilibili.com/1531982015/channel/collectiondetail?sid=6348987' },
   ],
 };
 

@@ -1200,6 +1200,10 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   border-bottom: 1px solid #ffe0b0;
   box-shadow: 0 1px 4px rgba(178,106,0,.12);
 }
+/* 微信内跳 APP 受阻的明确指引弹窗 */
+.wx-jump-modal { max-width: 340px; }
+.wx-jump-text { font-size: 13px; line-height: 1.7; color: var(--text-body); margin: 6px 0; }
+.wx-jump-text b { color: var(--text-title); }
 .en-empty {
   color: var(--text-sub);
   text-align: center;

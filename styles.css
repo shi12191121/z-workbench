@@ -1256,6 +1256,35 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .wx-jump-modal { max-width: 340px; }
 .wx-jump-text { font-size: 13px; line-height: 1.7; color: var(--text-body); margin: 6px 0; }
 .wx-jump-text b { color: var(--text-title); }
+.bbdc-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.bbdc-actions .btn { width: 100%; }
+/* 站内背词 */
+.en-recite-card {
+  width: 100%; max-width: 460px; margin: auto; align-self: center;
+  background: #f0f7ff; border-radius: 18px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+.en-recite-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: linear-gradient(135deg,#1f5e96,#3a7fb8); color:#fff;
+}
+.en-recite-prog { font-size: 14px; font-weight: 700; }
+.en-recite-close { background: rgba(255,255,255,.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:15px; cursor:pointer; }
+.en-recite-close:active { transform: scale(.92); }
+.en-recite-flash {
+  min-height: 230px; padding: 30px 22px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.en-recite-word { font-size: 34px; font-weight: 800; color: var(--text-title); letter-spacing: .5px; word-break: break-word; }
+.en-recite-mean { font-size: 18px; color: var(--text-body); line-height: 1.6; word-break: break-word; }
+.en-recite-tip { text-align:center; font-size: 12px; color: var(--text-sub); padding: 0 16px 4px; }
+.en-recite-btns { display: flex; gap: 10px; padding: 14px 16px 20px; }
+.en-recite-btns .btn { flex: 1; }
+.en-recite-btns .en-ok { background: #2fa463; color:#fff; box-shadow: 0 4px 14px rgba(47,164,99,.35); }
+.en-recite-btns .en-ok:active { transform: translateY(1px) scale(.97); }
+.en-recite-btns .en-no { background: #eaf4fc; color: var(--btn); box-shadow: none; }
+.en-recite-btns .en-no:active { transform: translateY(1px) scale(.97); }
 .en-empty {
   color: var(--text-sub);
   text-align: center;

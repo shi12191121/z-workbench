@@ -53,6 +53,7 @@ function defaultState() {
     todos: [], nextTodoId: 1,
     videos: [], english: [], fitness: [], basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enStudyCount: 0, enLastStudy: 0,
+    fixedSchedule: [], nextFixedId: 1,
     douyin: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
     lele: [],
     goal: 10000
@@ -490,6 +491,26 @@ function renderTodoToday() {
     </div>`).join('');
 }
 
+/* 今日固定行程：用户自填时间+行程，仿参考图样式；勾选表示完成 */
+function renderFixedSchedule() {
+  const dateText = $('#fixedDateText'); if (dateText) dateText.textContent = todayKey();
+  const wrap = $('#fixedScheduleList'); if (!wrap) return;
+  const list = S.fixedSchedule || [];
+  if (!list.length) {
+    wrap.innerHTML = '<div class="td-empty">还没有固定行程，填上你的每日作息吧～</div>';
+    return;
+  }
+  // 按时间升序排序（空时间排到最后）
+  const sorted = [...list].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+  wrap.innerHTML = sorted.map(t => `
+    <div class="fixed-row ${t.done ? 'done' : ''}" data-fix="${t.id}">
+      <div class="fixed-check"></div>
+      <div class="fixed-time">${escapeHtml(t.time || '—')}</div>
+      <div class="fixed-content">${escapeHtml(t.content || '')}</div>
+      <button class="td-todo-del" data-fix-del="${t.id}" title="删除">✕</button>
+    </div>`).join('');
+}
+
 /* 今日待办·今日任务点击切换/删除 */
 const todoTodayList = $('#todoTodayList');
 if (todoTodayList) {
@@ -507,6 +528,44 @@ if (todoTodayList) {
 if (todoTodayInput) {
   todoTodayInput.addEventListener('keydown', e => { if (e.key === 'Enter') todoTodayBtn && todoTodayBtn.click(); });
 }
+
+/* 今日固定行程：点击勾选 / 删除 / 添加 */
+const fixedWrap = $('#fixedScheduleList');
+if (fixedWrap) {
+  fixedWrap.addEventListener('click', e => {
+    if (e.target.closest('[data-fix-del]')) {
+      const dl = e.target.closest('[data-fix-del]');
+      S.fixedSchedule = (S.fixedSchedule || []).filter(x => x.id !== +dl.dataset.fixDel);
+      Store.save(); renderFixedSchedule(); toast('已删除');
+      return;
+    }
+    const r = e.target.closest('[data-fix]');
+    if (r) {
+      const t = (S.fixedSchedule || []).find(x => x.id === +r.dataset.fix);
+      if (t) { t.done = !t.done; Store.save(); renderFixedSchedule(); }
+    }
+  });
+}
+const btnAddFixed = $('#btnAddFixed');
+const fixedTimeInput = $('#fixedTimeInput');
+const fixedContentInput = $('#fixedContentInput');
+function addFixedRow() {
+  if (!btnAddFixed) return;
+  const time = ((fixedTimeInput && fixedTimeInput.value) || '').trim();
+  const content = ((fixedContentInput && fixedContentInput.value) || '').trim();
+  if (!content) { toast('请填写行程内容'); return; }
+  if (!/^\d{1,2}:\d{1,2}$/.test(time)) { toast('时间格式：HH:MM（如 07:00）'); return; }
+  S.fixedSchedule = S.fixedSchedule || [];
+  S.fixedSchedule.push({ id: S.nextFixedId++, time, content, done: false });
+  Store.save();
+  if (fixedTimeInput) fixedTimeInput.value = '';
+  if (fixedContentInput) fixedContentInput.value = '';
+  renderFixedSchedule();
+  toast('已添加');
+}
+if (btnAddFixed) btnAddFixed.onclick = addFixedRow;
+if (fixedContentInput) fixedContentInput.addEventListener('keydown', e => { if (e.key === 'Enter') addFixedRow(); });
+if (fixedTimeInput) fixedTimeInput.addEventListener('keydown', e => { if (e.key === 'Enter') addFixedRow(); });
 
 /* ----------------------- 每日计划（4 模块）----------------------- */
 function renderDaily() {
@@ -1613,6 +1672,7 @@ function renderAll() {
   renderGrowth();
   renderDaily();
   renderTodoToday();
+  renderFixedSchedule();
   renderTodos(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
   renderWps(); renderReview(); renderSavings(); renderBills();
   renderDouyin(); renderDiet(); renderTravel(); renderLele();

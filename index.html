@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803n" />
+<link rel="stylesheet" href="styles.css?v=20260803o" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -599,20 +599,86 @@
 
     <!-- ---------- 抖音创作 ---------- -->
     <section class="page-section" id="page-douyin">
-      <div class="page-header"><h1 class="page-title">抖音创作</h1><p class="page-subtitle">灵感、脚本、发布，一站式记录你的内容</p></div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">本周发布</div><div class="stat-value"><span id="dyWeek">0</span><span class="unit">条</span></div></div>
-        <div class="stat-card"><div class="stat-label">累计作品</div><div class="stat-value"><span id="dyTotal">0</span><span class="unit">条</span></div></div>
-        <div class="stat-card"><div class="stat-label">已发布</div><div class="stat-value"><span id="dyDone">0</span><span class="unit">条</span></div></div>
+      <div class="page-header"><h1 class="page-title">抖音创作 · 河南师大IP <span class="sparkle">✦</span></h1><p class="page-subtitle">从0打造你的「河南师大学长」人设，吸引2026新生关注 + 加微信</p></div>
+
+      <!-- IP 定位 -->
+      <div class="dy-ip">
+        <div class="dy-ip-avatar">🎓</div>
+        <div class="dy-ip-info">
+          <div class="dy-ip-name">河南师大 · 化学学长</div>
+          <div class="dy-ip-tags"><span>大一升大二</span><span>化学专业</span><span>校园卡兼职</span><span>2026新生向导</span></div>
+          <div class="dy-ip-desc">真实接地气的学长人设：分享录取 / 校区 / 宿舍 / 办卡避坑，软性引流加微信。不完美但可信，比官方号更招新生喜欢。</div>
+        </div>
       </div>
+
+      <!-- 引流话术 -->
+      <div class="card dy-hook">
+        <div class="card-head"><div class="card-title">💬 引流话术模板（每条结尾用）</div></div>
+        <div class="dy-hook-box" id="dyHook">想知道河南师大宿舍 / 校区 / 录取分数线的，评论区问我，或者加我微信【你的号】，学长一对一帮你避坑～</div>
+        <button class="btn btn-ghost" id="btnCopyHook">复制话术</button>
+      </div>
+
+      <!-- 爆款拆解 -->
       <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">🎬 创作清单</div></div>
+        <div class="card-head"><div class="card-title">🔥 爆款拆解 · 为什么火</div><div class="card-sub">研究过的大学类爆款，照着学</div></div>
+        <div class="dy-case-list" id="dyCases"></div>
+        <div class="dy-fail">
+          <div class="dy-fail-title">⚠️ 失败避雷（别踩）</div>
+          <ul id="dyFails" class="dy-fail-list"></ul>
+        </div>
+      </div>
+
+      <!-- 选题库 -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">📚 选题库 · 爆款创作</div><div class="card-sub">点「＋清单」直接进下方创作清单</div></div>
+        <div id="dyTopics"></div>
+      </div>
+
+      <!-- 二创模板 -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">♻️ 二创模板 · 热门格式的本地化</div></div>
+        <div id="dyRemix"></div>
+      </div>
+
+      <!-- 每日素材 -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">📡 每日素材 · 实时更新</div><div class="card-sub" id="dyMatUpdate">更新于 —</div></div>
         <div class="add-row">
-          <input type="text" class="form-input" id="dyName" placeholder="作品主题 例：一周穿搭分享" maxlength="50" style="flex:2"/>
+          <input type="text" class="form-input" id="dyMatTitle" placeholder="素材标题，如：2026录取分数线公布" maxlength="40" style="flex:2"/>
+          <input type="text" class="form-input" id="dyMatBody" placeholder="要点（可选）" maxlength="80" style="flex:2"/>
+          <button class="btn" id="btnAddMat">+ 添加</button>
+        </div>
+        <div id="dyMaterial"></div>
+        <p class="dy-tip">💡 每天我会自动帮你搜「河南师范大学 2026 招生 / 新生」最新动态，整理成素材播报发给你，你挑有用的贴到这里。</p>
+      </div>
+
+      <!-- 创作清单 -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">🎬 创作清单</div><div class="card-sub">勾选=已发布</div></div>
+        <div class="stat-grid" style="margin-bottom:12px;">
+          <div class="stat-card"><div class="stat-label">本周发布</div><div class="stat-value"><span id="dyWeek">0</span><span class="unit">条</span></div></div>
+          <div class="stat-card"><div class="stat-label">累计作品</div><div class="stat-value"><span id="dyTotal">0</span><span class="unit">条</span></div></div>
+          <div class="stat-card"><div class="stat-label">已发布</div><div class="stat-value"><span id="dyDone">0</span><span class="unit">条</span></div></div>
+        </div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="dyName" placeholder="作品主题 例：新生办卡3个坑" maxlength="50" style="flex:2"/>
           <select class="form-input" id="dyPlat" style="flex:0 0 110px"><option value="抖音">抖音</option><option value="B站">B站</option><option value="小红书">小红书</option><option value="视频号">视频号</option></select>
           <button class="btn" id="btnAddDy">+ 添加</button>
         </div>
         <div id="dyList"></div>
+      </div>
+
+      <!-- 数据复盘 -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">📊 数据复盘</div><div class="card-sub">记下来，看哪种选题爆</div></div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="dyStatName" placeholder="视频主题" maxlength="30" style="flex:2"/>
+          <input type="number" class="form-input" id="dyStatPlay" placeholder="播放" style="flex:1" inputmode="numeric"/>
+          <input type="number" class="form-input" id="dyStatLike" placeholder="点赞" style="flex:1" inputmode="numeric"/>
+          <input type="number" class="form-input" id="dyStatAdd" placeholder="加微" style="flex:1" inputmode="numeric"/>
+          <button class="btn" id="btnAddStat">+ 记录</button>
+        </div>
+        <div id="dyStats"></div>
       </div>
     </section>
 
@@ -822,7 +888,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803n"></script>
-<script src="app.js?v=20260803n"></script>
+<script src="cet6words.js?v=20260803o"></script>
+<script src="app.js?v=20260803o"></script>
 </body>
 </html>

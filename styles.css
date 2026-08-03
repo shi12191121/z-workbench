@@ -1185,8 +1185,11 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   margin-right: 6px;
   white-space: nowrap;
   flex: 0 0 auto;
+  cursor: pointer;
+  user-select: none;
   transition: background .2s;
 }
+.en-bili-go:active { transform: translateY(1px) scale(.96); background: #d0e6f6; }
 .en-bili-go:hover { background: #d8eaf8; color: var(--btn-hover); }
 .en-empty {
   color: var(--text-sub);

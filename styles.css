@@ -1204,7 +1204,19 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   font-weight: 600;
 }
 .en-book-sub { font-size: 12px; opacity: 0.92; margin-top: 6px; line-height: 1.4; }
-.en-book-go { font-size: 28px; font-weight: 300; opacity: 0.85; flex: 0 0 auto; }
+.en-book-go { font-size: 28px; font-weight: 300; opacity: 0.85; flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+.en-zero-btn {
+  border: 1px solid rgba(31,94,150,0.25);
+  background: rgba(255,255,255,0.65);
+  color: #1a3d5c;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 9px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.en-zero-btn:active { transform: scale(0.96); background: rgba(255,255,255,0.9); }
 
 /* B站视频区 */
 .en-add-bili {

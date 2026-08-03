@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803i" />
+<link rel="stylesheet" href="styles.css?v=20260803j" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -338,7 +338,10 @@
           <div class="en-book-num" id="enBookNum">点此填写本次背词数</div>
           <div class="en-book-sub">已学 <span id="enStudyCount2">0</span> 次</div>
         </div>
-        <div class="en-book-go">›</div>
+        <div class="en-book-go">
+          <button class="en-zero-btn" id="enZeroBtn" title="归零已学习次数" aria-label="归零已学习次数">↺归零</button>
+          <span class="en-book-arrow">›</span>
+        </div>
       </div>
 
       <!-- B站配套学习视频（按试卷板块分类，已按抖音/B站口碑推荐填好） -->
@@ -753,7 +756,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803i"></script>
-<script src="app.js?v=20260803i"></script>
+<script src="cet6words.js?v=20260803j"></script>
+<script src="app.js?v=20260803j"></script>
 </body>
 </html>

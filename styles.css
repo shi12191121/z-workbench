@@ -1191,6 +1191,15 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 }
 .en-bili-go:active { transform: translateY(1px) scale(.96); background: #d0e6f6; }
 .en-bili-go:hover { background: #d8eaf8; color: var(--btn-hover); }
+/* 微信内跳转提示条 */
+.wx-tip {
+  position: sticky; top: 0; z-index: 60;
+  background: #fff4e5; color: #b26a00;
+  font-size: 12.5px; line-height: 1.5;
+  padding: 8px 14px; text-align: center;
+  border-bottom: 1px solid #ffe0b0;
+  box-shadow: 0 1px 4px rgba(178,106,0,.12);
+}
 .en-empty {
   color: var(--text-sub);
   text-align: center;

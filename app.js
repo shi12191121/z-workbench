@@ -765,11 +765,16 @@ function biliSchemeFromUrl(url) {
 function isWeChat() { return /micromessenger/i.test(navigator.userAgent); }
 function showWxTip() { const el = document.getElementById('wxTip'); if (el) el.hidden = false; }
 
-// 跳转"不背单词"APP（按包名直接唤起已装 APP；>10 分钟才算一次学习次数）
-// 说明：不背单词包名 cn.com.langeasy.LangEasyLexis（已核实正确）。安卓用 intent:// 按包名唤起；
-//       微信会拦截所有跳 APP 行为，此时弹明确指引，绝不偷偷跳到官网下载页。
+// 跳转"不背单词"APP
+// 做法：点卡片先弹确认框，用户主动点「打开 APP」才真正唤起。
+// 这样能绕过浏览器对“网页自动重定向到深链”的拦截（之前失败就是这个原因）。
+// 不背单词包名 cn.com.langeasy.LangEasyLexis（已核实正确）。
 function openBbdc() {
   if (isWeChat()) { wxJumpBlocked(); return; }
+  const m = document.getElementById('bbdcModal');
+  if (m) m.hidden = false; // 只弹确认框，不直接跳
+}
+function launchBbdc() {
   const pkg = 'cn.com.langeasy.LangEasyLexis';
   const within = (Date.now() - (S.enLastStudy || 0)) < 10 * 60 * 1000; // 10 分钟内不重复计数
   const tryCount = () => {
@@ -784,26 +789,12 @@ function openBbdc() {
   document.addEventListener('visibilitychange', onHide);
 
   if (isAndroid()) {
-    const fb = encodeURIComponent('https://www.bbdc.cn/');
-    location.href = 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + pkg + ';S.browser_fallback_url=' + fb + ';end';
-    // 2 秒后仍可见 → APP 未唤起（多半没装）→ 引导官网，且不计次数
-    setTimeout(() => {
-      if (!document.hidden) {
-        document.removeEventListener('visibilitychange', onHide);
-        toast('未检测到不背单词 APP，已为你打开官网');
-        location.href = 'https://www.bbdc.cn/';
-      }
-    }, 2000);
+    // 用户已主动点“打开 APP” → 此刻发起 intent 唤起，浏览器不再拦截
+    location.href = 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + pkg + ';S.browser_fallback_url=' + encodeURIComponent('https://www.bbdc.cn/') + ';end';
     return;
   }
   if (isIOS()) {
     location.href = 'bbdc://';
-    setTimeout(() => {
-      if (!document.hidden) {
-        document.removeEventListener('visibilitychange', onHide);
-        location.href = 'https://www.bbdc.cn/';
-      }
-    }, 2000);
     return;
   }
   document.removeEventListener('visibilitychange', onHide);
@@ -845,6 +836,17 @@ if (isWeChat()) showWxTip();
   m.addEventListener('click', e => { if (e.target === m) m.hidden = true; });
   const ok = document.getElementById('wxJumpOk');
   if (ok) ok.addEventListener('click', () => { m.hidden = true; });
+})();
+
+// 不背单词唤起确认弹窗：点遮罩/取消关闭，点「打开 APP」真正唤起
+(() => {
+  const m = document.getElementById('bbdcModal');
+  if (!m) return;
+  m.addEventListener('click', e => { if (e.target === m) m.hidden = true; });
+  const cancel = document.getElementById('bbdcCancel');
+  if (cancel) cancel.addEventListener('click', () => { m.hidden = true; });
+  const open = document.getElementById('bbdcOpen');
+  if (open) open.addEventListener('click', () => { m.hidden = true; launchBbdc(); });
 })();
 
 // 抖音/B站口碑推荐的六级老师（按试卷板块分类，含刘晓燕；填词题/段落匹配单列）

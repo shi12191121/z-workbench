@@ -788,6 +788,15 @@ function submitLog() {
   toast('已记录 +' + n + ' 个单词');
 }
 
+// 已学习次数归零（仅清次数，不动已学单词数）
+function zeroEnCount() {
+  S.enStudyCount = 0;
+  Store.save();
+  const sc = document.getElementById('enStudyCount'); if (sc) sc.textContent = 0;
+  const sc2 = document.getElementById('enStudyCount2'); if (sc2) sc2.textContent = 0;
+  toast('已学习次数已归零');
+}
+
 // 跳转 B 站：唤起 APP 搜"英语六级"（安卓/iOS 均用 bilibili:// scheme 直接进 APP，不落主页）
 function openBili() {
   if (isWeChat()) { wxJumpBlocked(); return; }
@@ -832,6 +841,9 @@ if (isWeChat()) showWxTip();
     card.addEventListener('click', openLog);
     card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLog(); } });
   }
+  // 归零按钮（阻止冒泡，避免触发记录弹窗）
+  const zb = document.getElementById('enZeroBtn');
+  if (zb) zb.addEventListener('click', e => { e.stopPropagation(); zeroEnCount(); });
   const m = document.getElementById('enLogModal');
   if (m) m.addEventListener('click', e => { if (e.target === m) closeLog(); });
   const cancel = document.getElementById('enLogCancel');
@@ -1732,6 +1744,8 @@ Store.onChange(() => { S = Store.state; renderAll(); });
 S = defaultState();
 Store.init();
 S = Store.state;
+// 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
+if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
 switchPage(S.currentPage || 'growth');
 renderAll();
 setupReminder();

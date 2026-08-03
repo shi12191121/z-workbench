@@ -419,6 +419,25 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .course-set { font-size: 13px; padding: 7px 9px; }
 .course-finish { font-size: 12px; font-weight: 600; padding: 7px 12px; }
 .course-finish.on { background: linear-gradient(135deg, #7fc8a0, #5cb585); color: #fff; border-color: transparent; }
+.course-intro { font-size: 12px; color: var(--text-sub); margin: 4px 0 10px; padding: 7px 10px; background: rgba(99,168,224,0.07); border-radius: 10px; }
+.course-intro span { color: #1a3d5c; font-weight: 600; }
+.course-unit { margin-top: 12px; border-top: 1px dashed rgba(99,168,224,0.18); padding-top: 10px; }
+.cu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.cu-title { font-size: 13px; font-weight: 700; color: #14304d; }
+.cu-prog { font-size: 11.5px; color: #2b6fb0; font-weight: 600; background: rgba(99,168,224,0.12); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.cu-bar { height: 4px; border-radius: 999px; background: rgba(99,168,224,0.12); overflow: hidden; margin-bottom: 8px; }
+.cu-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #63a8e0, #4a90d9); transition: width .35s ease; }
+.cu-lessons { display: flex; flex-direction: column; gap: 6px; }
+.lesson-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #f7fbff; cursor: pointer; transition: background .15s; -webkit-tap-highlight-color: transparent; }
+.lesson-row:active { background: #e8f4fd; }
+.lesson-row.on { background: #f0faf4; }
+.lesson-check { width: 18px; height: 18px; border-radius: 6px; border: 2px solid #bcd4ea; flex: none; position: relative; transition: all .15s; }
+.lesson-row.on .lesson-check { background: linear-gradient(135deg, #7fc8a0, #5cb585); border-color: transparent; }
+.lesson-row.on .lesson-check::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
+.lesson-main { flex: 1; min-width: 0; }
+.lesson-title { font-size: 12.5px; color: #1a3d5c; line-height: 1.35; }
+.lesson-row.on .lesson-title { color: #3f9e6e; }
+.lesson-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
 @media (max-width: 720px) {
   .vd-stats { grid-template-columns: repeat(2, 1fr); }

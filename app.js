@@ -688,35 +688,61 @@ function enCountdown() {
   $('#enCdSub').textContent = days > 0 ? `备考进行中 · 已过 ${passed}/${total} 天` : '考试日到了，加油！';
 }
 
-// 跳转"不背单词"APP（直接唤起已安装的 APP，不弹下载）
-// 安卓/iOS：用 location.href 触发 scheme；若 2s 内页面仍在前台说明 APP 未唤起，才降级到网页版
-function openBbdc() {
-  const scheme = 'bbdc://';
-  const webUrl = 'https://www.bbdc.cn/';
-  let opened = false;
-  const onHide = () => {
-    opened = true;
-    clearTimeout(timer);
-    document.removeEventListener('visibilitychange', onHide);
-    // APP 成功唤起 → 记录一次学习
-    S.enStudyCount = (S.enStudyCount || 0) + 1;
-    Store.save();
-    const el = document.getElementById('enStudyCount');
-    if (el) el.textContent = S.enStudyCount;
-    const el2 = document.getElementById('enStudyCount2');
-    if (el2) el2.textContent = S.enStudyCount;
-  };
-  document.addEventListener('visibilitychange', onHide);
-  const timer = setTimeout(() => {
-    document.removeEventListener('visibilitychange', onHide);
-    if (!opened && !document.hidden) window.location.href = webUrl; // 未安装 → 网页版（网页版装了 APP 也会唤起）
-  }, 2000);
-  window.location.href = scheme;
+// ---- 唤起 APP 的通用工具 ----
+function isAndroid() { return /android/i.test(navigator.userAgent); }
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+// 把 B站网页链接转成 APP 深链 scheme
+function biliSchemeFromUrl(url) {
+  if (!url) return null;
+  let m;
+  if ((m = url.match(/space\.bilibili\.com\/(\d+)/))) return 'bilibili://space/' + m[1];
+  if ((m = url.match(/bilibili\.com\/video\/(BV[\w]+)/i))) return 'bilibili://video/' + m[1];
+  if ((m = url.match(/search\.bilibili\.com\/all\?keyword=([^&]+)/i))) return 'bilibili://search?keyword=' + m[1];
+  return null;
+}
+// 安卓：用 intent 按包名直接唤起已装 APP，未装则跳应用市场（不会弹下载网页）
+function toIntent(scheme, pkg) {
+  const s = scheme.split(':')[0];
+  const data = scheme.replace(/^[a-z0-9]+:\/\//i, '');
+  return `intent://${data}#Intent;package=${pkg};scheme=${s};end`;
 }
 
-// 跳转 B 站搜索六级
+// 跳转"不背单词"APP（直接唤起已安装的 APP，不弹下载页）
+function openBbdc() {
+  // APP 成功唤起 → 记录一次学习次数
+  const onHide = () => {
+    S.enStudyCount = (S.enStudyCount || 0) + 1;
+    Store.save();
+    const el = document.getElementById('enStudyCount'); if (el) el.textContent = S.enStudyCount;
+    const el2 = document.getElementById('enStudyCount2'); if (el2) el2.textContent = S.enStudyCount;
+    document.removeEventListener('visibilitychange', onHide);
+  };
+  document.addEventListener('visibilitychange', onHide);
+
+  if (isAndroid()) {
+    // 直接按包名唤起已装 APP：cn.com.langeasy.LangEasyLexis（scheme bbdc://）
+    location.href = toIntent('bbdc://', 'cn.com.langeasy.LangEasyLexis');
+  } else if (isIOS()) {
+    location.href = 'bbdc://';
+    // iOS 未唤起则 2s 后跳官方页（会引导到 App Store），避免直接弹下载网页
+    setTimeout(() => { if (!document.hidden) location.href = 'https://www.bbdc.cn/'; }, 2000);
+  } else {
+    window.open('https://www.bbdc.cn/', '_blank'); // 桌面端开官网
+  }
+}
+
+// 跳转 B 站：优先唤起 APP，未装/桌面则开网页
 function openBili() {
-  window.open('https://search.bilibili.com/all?keyword=%E8%8B%B1%E8%AF%AD%E5%85%AD%E7%BA%A7', '_blank');
+  const url = 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('英语六级');
+  const scheme = 'bilibili://search?keyword=' + encodeURIComponent('英语六级');
+  if (isAndroid()) location.href = toIntent(scheme, 'tv.danmaku.bili');
+  else window.open(url, '_blank');
+}
+// 点"去看"：唤起 B站 APP 看具体课程
+function goBili(url) {
+  const scheme = biliSchemeFromUrl(url);
+  if (isAndroid() && scheme) location.href = toIntent(scheme, 'tv.danmaku.bili');
+  else window.open(url, '_blank');
 }
 
 // 抖音/B站口碑推荐的六级老师（按试卷板块分类，含刘晓燕；填词题/段落匹配单列）
@@ -753,7 +779,7 @@ function renderEnBili() {
     const items = EN_BILI_RECOMMEND[sec].map(v => `
       <div class="list-item">
         <div class="li-main"><div class="li-title">${escapeHtml(v.name)}</div></div>
-        <a class="en-bili-go" href="${escapeHtml(v.url)}" target="_blank" rel="noopener">去看 ›</a>
+        <span class="en-bili-go" data-url="${escapeHtml(v.url)}" role="button" tabindex="0">去看 ›</span>
       </div>`).join('');
     return `<div class="en-bili-sec"><div class="en-bili-sec-title">${sec}</div>${items}</div>`;
   }).join('');
@@ -762,7 +788,7 @@ function renderEnBili() {
     html += `<div class="en-bili-sec"><div class="en-bili-sec-title">我的添加</div>` + list.map(v => `
       <div class="list-item">
         <div class="li-main"><div class="li-title">${escapeHtml(v.name)}</div><div class="li-sub">添加于 ${v.date || ''}</div></div>
-        <a class="en-bili-go" href="${escapeHtml(v.url)}" target="_blank" rel="noopener">去看 ›</a>
+        <span class="en-bili-go" data-url="${escapeHtml(v.url)}" role="button" tabindex="0">去看 ›</span>
         <button class="icon-btn" data-bdel="${v.id}">${svgDel}</button>
       </div>`).join('') + `</div>`;
   }
@@ -873,8 +899,10 @@ $('#btnAddBili').addEventListener('click', () => {
   toast('已添加');
 });
 
-// 删除 B 站视频
+// 删除 / 点开 B 站视频
 $('#enBiliList').addEventListener('click', e => {
+  const go = e.target.closest('[data-url]');
+  if (go) { goBili(go.dataset.url); return; }
   const dl = e.target.closest('[data-bdel]');
   if (!dl) return;
   S.enBili = (S.enBili || []).filter(x => x.id != dl.dataset.bdel);

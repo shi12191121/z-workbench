@@ -711,14 +711,58 @@ function updateTodoPageSub() {
 }
 
 /* ===== 电脑剪辑 · 课程追踪 ===== */
+// 影视飓风「剪辑实战课」（B站：剪辑全能必修课 / 抖音：剪映必修课，49元）
+// 真实结构：1 节导学 + 3 单元 14 节正课（已核对课程目录）
+const CLIP_UNITS = [
+  { title: '第一单元 · 从0基础入门剪辑全流程', lessons: [
+    { n: 1, title: '初试成片：10分钟走通专业剪辑全流程', dur: '11:37' },
+    { n: 2, title: '高效起步：口播精剪与 A/B-roll 协同', dur: '15:59' },
+    { n: 3, title: '节奏掌控：混剪视频与蒙太奇逻辑', dur: '11:34' },
+    { n: 4, title: '听觉塑造：音乐处理与音效设计思维', dur: '11:31' },
+    { n: 5, title: '最终交付：导出管理与发布规范', dur: '14:53' }
+  ]},
+  { title: '第二单元 · 用简单工具实现专业效果', lessons: [
+    { n: 6, title: '运动控制：关键帧与曲线运动', dur: '10:54' },
+    { n: 7, title: '动态节奏：曲线变速与素材帧率', dur: '10:51' },
+    { n: 8, title: '空间重组：全能抠像与蒙版合成', dur: '12:11' },
+    { n: 9, title: '色彩科学：掌握一级调色工具', dur: '12:53' }
+  ]},
+  { title: '第三单元 · 剪出和影视飓风一样的视频', lessons: [
+    { n: 10, title: '飓多多实操：快速复刻综艺包装', dur: '18:43' },
+    { n: 11, title: '影视飓风运镜实操：进阶平面跟踪', dur: '10:55' },
+    { n: 12, title: '采访实操：快速上手多机位剪辑', dur: '08:45' },
+    { n: 13, title: '亿点点不一样实操：时钟理论应用', dur: '20:35' },
+    { n: 14, title: '样片日记实操：Vlog的剪辑结构与色彩', dur: '14:50' }
+  ]}
+];
+function syncCourseProgress(c) {
+  if (c.units && c.units.length) {
+    const dc = c.units.reduce((s, u) => s + u.lessons.filter(l => l.done).length, 0);
+    c.current = dc; c.done = dc >= c.total;
+  }
+}
 function ensureCourses() {
-  // 首次进入预置两门影视飓风课程（用户明确在学）
-  if (S.courses && S.courses.length) return;
-  S.courses = [
-    { id: uid(), name: '影视飓风 · 剪辑实战课', total: 12, current: 0, done: false },
-    { id: uid(), name: '影视飓风 · iPhone 摄影课', total: 8, current: 0, done: false }
-  ];
-  Store.save();
+  if (!S.courses) S.courses = [];
+  let changed = false;
+  if (!S.courses.length) {
+    S.courses = [
+      { id: uid(), name: '影视飓风 · 剪辑实战课', total: 14, current: 0, done: false,
+        intro: { title: '导学：如何更好地学习这门课程？', dur: '01:53' }, units: CLIP_UNITS },
+      { id: uid(), name: '影视飓风 · iPhone 摄影课', total: 8, current: 0, done: false }
+    ];
+    changed = true;
+  } else {
+    // 迁移：已存在的剪辑实战课补上单元结构并修正总节数（原写为12）
+    S.courses.forEach(c => {
+      if (c.name && c.name.indexOf('剪辑实战') >= 0 && !c.units) {
+        c.units = CLIP_UNITS; c.total = 14;
+        if (c.current > 14) c.current = 14;
+        if (c.current >= 14) c.done = true;
+        changed = true;
+      }
+    });
+  }
+  if (changed) Store.save();
 }
 function renderCourses() {
   ensureCourses();
@@ -730,26 +774,64 @@ function renderCourses() {
   const wrap = document.getElementById('courseList');
   if (!wrap) return;
   if (!cs.length) { wrap.innerHTML = '<div class="empty-state" style="padding:14px 0;">还没有课程，添加一门开始学吧～</div>'; return; }
-  wrap.innerHTML = cs.map(c => {
-    const pct = c.total ? Math.min(100, Math.round((c.current / c.total) * 100)) : 0;
-    const prog = c.done ? '已结课 ✓' : `第 <b>${c.current}</b> / <b>${c.total}</b> 节`;
-    return `<div class="course-card ${c.done ? 'done' : ''}">
-      <div class="course-head">
-        <div class="course-name">🎬 ${escapeHtml(c.name)}</div>
-        <button class="course-del" data-act="del" data-course="${c.id}" title="删除">✕</button>
+  wrap.innerHTML = cs.map(c => (c.units && c.units.length) ? renderCourseDetail(c) : renderCourseSimple(c)).join('');
+}
+function renderCourseSimple(c) {
+  const pct = c.total ? Math.min(100, Math.round((c.current / c.total) * 100)) : 0;
+  const prog = c.done ? '已结课 ✓' : `第 <b>${c.current}</b> / <b>${c.total}</b> 节`;
+  return `<div class="course-card ${c.done ? 'done' : ''}">
+    <div class="course-head">
+      <div class="course-name">🎬 ${escapeHtml(c.name)}</div>
+      <button class="course-del" data-act="del" data-course="${c.id}" title="删除">✕</button>
+    </div>
+    <div class="course-bar"><div class="course-fill" style="width:${pct}%"></div></div>
+    <div class="course-foot">
+      <span class="course-prog">${prog}</span>
+      <div class="course-ctrl">
+        <button class="course-step" data-act="prev" data-course="${c.id}" ${c.current<=0?'disabled':''}>−</button>
+        <button class="course-step" data-act="next" data-course="${c.id}">＋</button>
+        <button class="course-set" data-act="set" data-course="${c.id}" title="改总节数">⚙</button>
+        <button class="course-finish ${c.done?'on':''}" data-act="finish" data-course="${c.id}">${c.done?'已完成':'标记完成'}</button>
       </div>
-      <div class="course-bar"><div class="course-fill" style="width:${pct}%"></div></div>
-      <div class="course-foot">
-        <span class="course-prog">${prog}</span>
-        <div class="course-ctrl">
-          <button class="course-step" data-act="prev" data-course="${c.id}" ${c.current<=0?'disabled':''}>−</button>
-          <button class="course-step" data-act="next" data-course="${c.id}">＋</button>
-          <button class="course-set" data-act="set" data-course="${c.id}" title="改总节数">⚙</button>
-          <button class="course-finish ${c.done?'on':''}" data-act="finish" data-course="${c.id}">${c.done?'已完成':'标记完成'}</button>
-        </div>
+    </div>
+  </div>`;
+}
+function renderCourseDetail(c) {
+  const total = c.total;
+  const doneCount = c.units.reduce((s, u) => s + u.lessons.filter(l => l.done).length, 0);
+  const pct = total ? Math.min(100, Math.round((doneCount / total) * 100)) : 0;
+  const introHtml = c.intro ? `<div class="course-intro">📌 ${escapeHtml(c.intro.title)} · <span>${escapeHtml(c.intro.dur || '')}</span></div>` : '';
+  const unitsHtml = c.units.map((u, ui) => {
+    const uDone = u.lessons.filter(l => l.done).length;
+    const uTotal = u.lessons.length;
+    const uPct = uTotal ? Math.round((uDone / uTotal) * 100) : 0;
+    return `<div class="course-unit">
+      <div class="cu-head"><span class="cu-title">${escapeHtml(u.title)}</span><span class="cu-prog">${uDone}/${uTotal}</span></div>
+      <div class="cu-bar"><div class="cu-fill" style="width:${uPct}%"></div></div>
+      <div class="cu-lessons">
+        ${u.lessons.map(l => `<div class="lesson-row ${l.done ? 'on' : ''}" data-act="lesson" data-course="${c.id}" data-u="${ui}" data-l="${l.n}">
+            <div class="lesson-check ${l.done ? 'checked' : ''}"></div>
+            <div class="lesson-main"><div class="lesson-title">${escapeHtml(l.title)}</div><div class="lesson-sub">第 ${l.n} 节 · ⏱ ${escapeHtml(l.dur || '')}</div></div>
+          </div>`).join('')}
       </div>
     </div>`;
   }).join('');
+  const prog = c.done ? '已结课 ✓' : `已学 <b>${doneCount}</b> / <b>${total}</b> 节`;
+  return `<div class="course-card ${c.done ? 'done' : ''}">
+    <div class="course-head">
+      <div class="course-name">🎬 ${escapeHtml(c.name)}</div>
+      <button class="course-del" data-act="del" data-course="${c.id}" title="删除">✕</button>
+    </div>
+    ${introHtml}
+    <div class="course-bar"><div class="course-fill" style="width:${pct}%"></div></div>
+    <div class="course-foot">
+      <span class="course-prog">${prog}</span>
+      <div class="course-ctrl">
+        <button class="course-finish ${c.done ? 'on' : ''}" data-act="finish" data-course="${c.id}">${c.done ? '已完成' : '标记完成'}</button>
+      </div>
+    </div>
+    ${unitsHtml}
+  </div>`;
 }
 
 /* 电脑剪辑 · 剪辑项目 */
@@ -775,7 +857,13 @@ if (courseListEl) {
     const c = S.courses.find(x => x.id === id); if (!c) return;
     if (act === 'prev') { c.current = Math.max(0, c.current - 1); if (c.current < c.total) c.done = false; }
     else if (act === 'next') { c.current = Math.min(c.total, c.current + 1); if (c.current >= c.total) c.done = true; }
-    else if (act === 'finish') { c.done = !c.done; if (c.done) c.current = c.total; else if (c.current >= c.total) c.current = c.total; }
+    else if (act === 'finish') { c.done = !c.done; if (c.units) syncCourseProgress(c); else if (c.done) c.current = c.total; else if (c.current >= c.total) c.current = c.total; }
+    else if (act === 'lesson') {
+      const ui = +btn.dataset.u, ln = +btn.dataset.l;
+      const u = c.units && c.units[ui]; if (!u) return;
+      const l = u.lessons.find(x => x.n === ln); if (!l) return;
+      l.done = !l.done; syncCourseProgress(c);
+    }
     else if (act === 'set') {
       const n = prompt('设置总节数（当前 ' + c.total + '）', c.total);
       if (n != null) { const v = parseInt(n, 10); if (v > 0) { c.total = v; if (c.current > v) c.current = v; if (c.current >= v) c.done = true; } }

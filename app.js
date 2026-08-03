@@ -770,11 +770,20 @@ function showWxTip() { const el = document.getElementById('wxTip'); if (el) el.h
 // 这样能绕过浏览器对“网页自动重定向到深链”的拦截（之前失败就是这个原因）。
 // 不背单词包名 cn.com.langeasy.LangEasyLexis（已核实正确）。
 function openBbdc() {
-  if (isWeChat()) { wxJumpBlocked(); return; }
   const m = document.getElementById('bbdcModal');
-  if (m) m.hidden = false; // 只弹确认框，不直接跳
+  if (!m) return;
+  m.hidden = false; // 弹确认框（含“打开APP”和“站内背词”双选项）
+  const a = document.getElementById('bbdcActions'); if (a) a.hidden = false;
+  const f = document.getElementById('bbdcFail'); if (f) f.hidden = true;
 }
 function launchBbdc() {
+  if (isWeChat()) {
+    // 微信里跳不出 APP，直接提示改用站内背词（不再“没反应”）
+    const a = document.getElementById('bbdcActions'); if (a) a.hidden = true;
+    const f = document.getElementById('bbdcFail'); if (f) f.hidden = false;
+    showWxTip();
+    return;
+  }
   const pkg = 'cn.com.langeasy.LangEasyLexis';
   const within = (Date.now() - (S.enLastStudy || 0)) < 10 * 60 * 1000; // 10 分钟内不重复计数
   const tryCount = () => {
@@ -787,19 +796,102 @@ function launchBbdc() {
   };
   const onHide = () => { document.removeEventListener('visibilitychange', onHide); tryCount(); };
   document.addEventListener('visibilitychange', onHide);
+  const showFail = () => {
+    document.removeEventListener('visibilitychange', onHide);
+    const m = document.getElementById('bbdcModal'); if (m) m.hidden = false;
+    const a = document.getElementById('bbdcActions'); if (a) a.hidden = true;
+    const f = document.getElementById('bbdcFail'); if (f) f.hidden = false;
+  };
 
   if (isAndroid()) {
     // 用户已主动点“打开 APP” → 此刻发起 intent 唤起，浏览器不再拦截
     location.href = 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + pkg + ';S.browser_fallback_url=' + encodeURIComponent('https://www.bbdc.cn/') + ';end';
+    setTimeout(() => { if (!document.hidden) showFail(); }, 2000); // 唤起失败 → 显兜底，绝不“没反应”
     return;
   }
   if (isIOS()) {
     location.href = 'bbdc://';
+    setTimeout(() => { if (!document.hidden) showFail(); }, 2000);
     return;
   }
   document.removeEventListener('visibilitychange', onHide);
   window.open('https://www.bbdc.cn/', '_blank');
 }
+
+// ---------- 站内背词（不依赖外部 APP，微信/浏览器都能用，进度同步） ----------
+let reciteDeck = [];
+let reciteIdx = 0;
+let reciteShown = false;
+function buildReciteDeck() {
+  const all = window.CET6_WORDS || [];
+  const learned = new Set(S.enLearnedWords || []);
+  const un = all.filter(w => !learned.has(w[0]));
+  const le = all.filter(w => learned.has(w[0]));
+  const shuf = arr => arr.slice().sort(() => Math.random() - 0.5);
+  let deck = shuf(un).slice(0, 20);
+  if (deck.length < 20) deck = deck.concat(shuf(le).slice(0, 20 - deck.length));
+  return deck;
+}
+function openRecite() {
+  reciteDeck = buildReciteDeck();
+  reciteIdx = 0; reciteShown = false;
+  const mask = document.getElementById('enReciteMask'); if (mask) mask.hidden = false;
+  // 一次“学习”计数（10 分钟规则）
+  const within = (Date.now() - (S.enLastStudy || 0)) < 10 * 60 * 1000;
+  if (!within) {
+    S.enStudyCount = (S.enStudyCount || 0) + 1;
+    S.enLastStudy = Date.now();
+    Store.save();
+    const sc = document.getElementById('enStudyCount'); if (sc) sc.textContent = S.enStudyCount;
+    const sc2 = document.getElementById('enStudyCount2'); if (sc2) sc2.textContent = S.enStudyCount;
+  }
+  renderRecite();
+}
+function renderRecite() {
+  const wordEl = document.getElementById('enReciteWord');
+  const meanEl = document.getElementById('enReciteMean');
+  const progEl = document.getElementById('enReciteProg');
+  const tipEl = document.getElementById('enReciteTip');
+  const showBtn = document.getElementById('enReciteShow');
+  const knownBtn = document.getElementById('enReciteKnown');
+  const forgetBtn = document.getElementById('enReciteForget');
+  if (reciteIdx >= reciteDeck.length) {
+    if (wordEl) wordEl.textContent = '🎉 本轮背完';
+    if (meanEl) { meanEl.hidden = false; meanEl.textContent = '已掌握 ' + (S.enLearnedWords || []).length + ' / ' + (window.CET6_WORDS || []).length + ' 词 · 已学 ' + (S.enStudyCount || 0) + ' 次'; }
+    if (progEl) progEl.textContent = '完成';
+    if (tipEl) tipEl.textContent = '想再来一轮，点「再来一轮」';
+    if (showBtn) { showBtn.hidden = false; showBtn.textContent = '再来一轮'; }
+    if (knownBtn) knownBtn.hidden = true;
+    if (forgetBtn) forgetBtn.hidden = true;
+    return;
+  }
+  const it = reciteDeck[reciteIdx];
+  if (wordEl) wordEl.textContent = it[0];
+  if (meanEl) { meanEl.hidden = !reciteShown; meanEl.textContent = it[1]; }
+  if (progEl) progEl.textContent = (reciteIdx + 1) + ' / ' + reciteDeck.length;
+  if (tipEl) tipEl.textContent = reciteShown ? '选「记住了」或「忘了」' : '点「显示释义」看意思';
+  if (showBtn) { showBtn.hidden = reciteShown; showBtn.textContent = '显示释义'; }
+  if (knownBtn) knownBtn.hidden = !reciteShown;
+  if (forgetBtn) forgetBtn.hidden = !reciteShown;
+}
+function reciteToggle() {
+  if (reciteIdx >= reciteDeck.length) { reciteDeck = buildReciteDeck(); reciteIdx = 0; reciteShown = false; renderRecite(); return; }
+  reciteShown = !reciteShown; renderRecite();
+}
+function reciteKnown() {
+  if (reciteIdx >= reciteDeck.length) return;
+  const w = reciteDeck[reciteIdx][0];
+  S.enLearnedWords = S.enLearnedWords || [];
+  if (!S.enLearnedWords.includes(w)) S.enLearnedWords.push(w);
+  Store.save();
+  const lw = document.getElementById('enLearnedWords'); if (lw) lw.textContent = S.enLearnedWords.length;
+  reciteIdx++; reciteShown = false; renderRecite();
+}
+function reciteForget() {
+  if (reciteIdx >= reciteDeck.length) return;
+  reciteIdx++; reciteShown = false; renderRecite();
+}
+function closeRecite() { const m = document.getElementById('enReciteMask'); if (m) m.hidden = true; }
 
 // 跳转 B 站：唤起 APP 搜"英语六级"（安卓/iOS 均用 bilibili:// scheme 直接进 APP，不落主页）
 function openBili() {
@@ -838,7 +930,7 @@ if (isWeChat()) showWxTip();
   if (ok) ok.addEventListener('click', () => { m.hidden = true; });
 })();
 
-// 不背单词唤起确认弹窗：点遮罩/取消关闭，点「打开 APP」真正唤起
+// 不背单词弹窗：双保险（打开APP / 站内背词）
 (() => {
   const m = document.getElementById('bbdcModal');
   if (!m) return;
@@ -847,6 +939,21 @@ if (isWeChat()) showWxTip();
   if (cancel) cancel.addEventListener('click', () => { m.hidden = true; });
   const open = document.getElementById('bbdcOpen');
   if (open) open.addEventListener('click', () => { m.hidden = true; launchBbdc(); });
+  const recite = document.getElementById('bbdcRecite');
+  if (recite) recite.addEventListener('click', () => { m.hidden = true; openRecite(); });
+  const failRecite = document.getElementById('bbdcFailRecite');
+  if (failRecite) failRecite.addEventListener('click', () => { m.hidden = true; openRecite(); });
+  // 站内背词绑定
+  const rm = document.getElementById('enReciteMask');
+  if (rm) rm.addEventListener('click', e => { if (e.target === rm) rm.hidden = true; });
+  const rc = document.getElementById('enReciteClose');
+  if (rc) rc.addEventListener('click', closeRecite);
+  const rs = document.getElementById('enReciteShow');
+  if (rs) rs.addEventListener('click', reciteToggle);
+  const rk = document.getElementById('enReciteKnown');
+  if (rk) rk.addEventListener('click', reciteKnown);
+  const rf = document.getElementById('enReciteForget');
+  if (rf) rf.addEventListener('click', reciteForget);
 })();
 
 // 抖音/B站口碑推荐的六级老师（按试卷板块分类，含刘晓燕；填词题/段落匹配单列）

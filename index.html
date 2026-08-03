@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803g" />
+<link rel="stylesheet" href="styles.css?v=20260803h" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -42,14 +42,42 @@
   </div>
 </div>
 
-<!-- 不背单词唤起确认（绕过浏览器自动跳深链拦截） -->
+<!-- 不背单词：打开APP + 站内背词（双保险） -->
 <div class="modal-mask" id="bbdcModal" hidden>
   <div class="modal wx-jump-modal">
-    <div class="modal-title">📱 打开不背单词</div>
-    <p class="wx-jump-text">即将为你唤起「不背单词」APP 开始背诵。点「打开 APP」即可跳转（手机已装会自动进入）。</p>
+    <div class="modal-title">📱 背六级单词</div>
+    <p class="wx-jump-text">选一种方式开始。微信 / 部分浏览器会拦截跳转，打不开时就用「站内背词」，进度一样同步。</p>
+    <div id="bbdcActions" class="bbdc-actions">
+      <button class="btn" id="bbdcOpen">📱 打开不背单词 APP</button>
+      <button class="btn btn-ghost" id="bbdcRecite">💡 用站内背词（推荐）</button>
+    </div>
+    <div id="bbdcFail" hidden class="bbdc-actions">
+      <p class="wx-jump-text">没能唤起 APP。你可以手动打开，或改用站内背词：</p>
+      <a href="https://www.bbdc.cn/" target="_blank" class="btn" id="bbdcSite">去不背单词官网 / 应用商店</a>
+      <button class="btn btn-ghost" id="bbdcFailRecite">改用站内背词</button>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="bbdcCancel">取消</button>
-      <button class="btn" id="bbdcOpen">打开 APP</button>
+    </div>
+  </div>
+</div>
+
+<!-- 站内背词（不依赖外部 APP，微信 / 浏览器都能用，进度同步） -->
+<div class="modal-mask" id="enReciteMask" hidden>
+  <div class="en-recite-card">
+    <div class="en-recite-bar">
+      <span class="en-recite-prog" id="enReciteProg">1 / 20</span>
+      <button class="en-recite-close" id="enReciteClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="en-recite-flash" id="enReciteFlash">
+      <div class="en-recite-word" id="enReciteWord">word</div>
+      <div class="en-recite-mean" id="enReciteMean" hidden></div>
+    </div>
+    <div class="en-recite-tip" id="enReciteTip">点「显示释义」看意思，再选记住 / 忘了</div>
+    <div class="en-recite-btns">
+      <button class="btn btn-ghost" id="enReciteShow">显示释义</button>
+      <button class="btn en-ok" id="enReciteKnown" hidden>记住了</button>
+      <button class="btn en-no" id="enReciteForget" hidden>忘了</button>
     </div>
   </div>
 </div>
@@ -752,7 +780,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803g"></script>
-<script src="app.js?v=20260803g"></script>
+<script src="cet6words.js?v=20260803h"></script>
+<script src="app.js?v=20260803h"></script>
 </body>
 </html>

@@ -55,7 +55,7 @@ function defaultState() {
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
-    lele: [],
+    gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
   };
 }
@@ -371,7 +371,7 @@ function renderCalendar() {
 function renderNineGrid() {
   const items = [
     { icon: '✅', label: '今日待办', val: `${S.todayTasks.filter(t => t.date === todayKey() && t.done).length}/${S.todayTasks.filter(t => t.date === todayKey()).length}`, page: 'todo', grad: 'grad-lake' },
-    { icon: '🐾', label: '乐乐宝宝', val: `${S.lele.length} 条`, page: 'lele', grad: 'grad-ice' },
+    { icon: '💕', label: '乐乐宝宝', val: `${(S.gfMem||[]).length} 回忆`, page: 'lele', grad: 'grad-ice' },
     { icon: '🎬', label: '电脑剪辑', val: `${S.videos.length} 条`, page: 'video', grad: 'grad-ice' },
     { icon: '📖', label: '英语学习', val: `${weekCount(S.english)} 天`, page: 'english', grad: 'grad-fog' },
     { icon: '💪', label: '健身计划', val: `${weekCount(S.fitness)} 次`, page: 'fitness', grad: 'grad-sky' },
@@ -1585,35 +1585,168 @@ $('#tvList').addEventListener('click', e => {
   const dl = e.target.closest('[data-tdv]'); if (dl) { S.travel = S.travel.filter(x => x.id !== +dl.dataset.tdv); Store.save(); renderTravel(); renderNineGrid(); toast('已删除'); }
 });
 
-/* 乐乐宝宝 */
-const moodEmoji = { '开心': '😺', '撒娇': '🥺', '贪吃': '🍗', '犯困': '😴', '捣乱': '🙀' };
+/* ========== 乐乐宝宝（女朋友栏位） ========== */
+// 农历 9-28 → 公历 预计算（2025-2054，lunar-javascript 实测） 离线可用
+const LUNAR_928 = {
+  2025: '2025-11-17', 2026: '2026-11-06', 2027: '2027-10-27', 2028: '2028-11-14', 2029: '2029-11-04',
+  2030: '2030-10-24', 2031: '2031-11-12', 2032: '2032-10-31', 2033: '2033-11-19', 2034: '2034-11-08',
+  2035: '2035-10-28', 2036: '2036-11-15', 2037: '2037-11-05', 2038: '2038-10-26', 2039: '2039-11-14',
+  2040: '2040-11-02', 2041: '2041-10-22', 2042: '2042-11-10', 2043: '2043-10-31', 2044: '2044-11-18',
+  2045: '2045-11-07', 2046: '2046-10-28', 2047: '2047-11-16', 2048: '2048-11-04', 2049: '2049-10-24',
+  2050: '2050-11-12', 2051: '2051-11-01', 2052: '2052-10-21', 2053: '2053-11-08', 2054: '2054-10-29'
+};
+function lunar928Solar(year) {
+  if (LUNAR_928[year]) return LUNAR_928[year];
+  for (let y = year + 1; y <= year + 5; y++) if (LUNAR_928[y]) return LUNAR_928[y];
+  return null;
+}
+function daysBetween(d1, d2) { // d1 - d2, 返回天数
+  const a = new Date(d1 + 'T00:00:00').getTime();
+  const b = new Date(d2 + 'T00:00:00').getTime();
+  return Math.round((a - b) / 86400000);
+}
+function nextDateOfYear(monthDay, fromDate) { // "12-19" → 今年的MM-DD（已过则明年）
+  const [m, d] = monthDay.split('-').map(Number);
+  const now = new Date(fromDate + 'T00:00:00');
+  const y = now.getFullYear();
+  let cand = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  if (cand < fromDate) cand = `${y + 1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  return cand;
+}
+function ageOn(yearBorn, dateStr) { // 在 dateStr 那天几岁
+  const d = new Date(dateStr + 'T00:00:00');
+  let a = d.getFullYear() - yearBorn;
+  if (d.getMonth() + 1 < new Date(yearBorn, 0).getMonth() + 1) a--;
+  return a;
+}
 function renderLele() {
-  const c = $('#leleCount'); if (c) c.textContent = S.lele.length;
-  const list = $('#leleList');
-  if (!list) return;
-  if (!S.lele.length) { list.innerHTML = '<div class="empty-state"><div class="icon">🐾</div>乐乐今天还没记录，去写一条吧～</div>'; return; }
-  list.innerHTML = S.lele.slice().reverse().map(v => `
-    <div class="lele-item">
-      <div class="li-emoji">${moodEmoji[v.mood] || '🐾'}</div>
-      <div class="li-text">${escapeHtml(v.name)}</div>
-      <div class="li-mood">${escapeHtml(v.mood || '')}</div>
-      <button class="li-del" data-led="${v.id}">删除</button>
+  // 1) 在一起天数
+  const today = todayKey();
+  const days = Math.max(0, daysBetween(today, '2025-12-19'));
+  const dEl = document.getElementById('gfDays'); if (dEl) dEl.textContent = days;
+
+  // 2) 倒计时列表（4个：恋爱纪念日 / 她的生日 / 我的生日 / 用户自定义）
+  const cdWrap = document.getElementById('gfCountdowns');
+  if (cdWrap) {
+    const items = [
+      { emoji: '💕', name: '在一起纪念日', date: nextDateOfYear('12-19', today) },
+      { emoji: '🎂', name: '她的生日（农历 9-28）', date: lunar928Solar(new Date(today).getFullYear()) || '2026-11-06' },
+      { emoji: '🎁', name: '我的生日', date: nextDateOfYear('08-03', today) }
+    ];
+    (S.gfCust || []).forEach(c => items.push({ emoji: c.emoji || '⭐', name: c.name, date: c.date, custom: true, id: c.id }));
+    cdWrap.innerHTML = items.map(it => {
+      const d = daysBetween(it.date, today);
+      const isToday = d === 0;
+      const isPast = d < 0;
+      const txt = isToday ? '就是今天 🎉' : (isPast ? '已经 ' + (-d) + ' 天' : '还有 ' + d + ' 天');
+      const cls = isToday ? 'gf-cd gf-cd-today' : (isPast ? 'gf-cd gf-cd-past' : 'gf-cd');
+      const delBtn = it.custom ? `<button class="gf-cd-del" data-cd="${it.id}">✕</button>` : '';
+      return `<div class="${cls}">
+        <div class="gf-cd-emoji">${it.emoji}</div>
+        <div class="gf-cd-name">${escapeHtml(it.name)}</div>
+        <div class="gf-cd-date">${it.date}</div>
+        <div class="gf-cd-dday">${txt}</div>
+        ${delBtn}
+      </div>`;
+    }).join('');
+  }
+
+  // 3) 今日互动打卡
+  const todayInteract = (S.gfInteract && S.gfInteract[today]) || {};
+  const checks = document.querySelectorAll('.gf-check');
+  let cnt = 0;
+  checks.forEach(b => {
+    const k = b.dataset.key;
+    if (todayInteract[k]) { b.classList.add('on'); cnt++; } else { b.classList.remove('on'); }
+  });
+  const ic = document.getElementById('gfInteractCount'); if (ic) ic.textContent = cnt;
+
+  // 4) 回忆录
+  const mc = document.getElementById('gfMemoryCount'); if (mc) mc.textContent = (S.gfMem || []).length;
+  const ml = document.getElementById('gfMemoryList');
+  if (ml) {
+    const arr = (S.gfMem || []).slice().sort((a, b) => a.date < b.date ? 1 : -1);
+    if (!arr.length) ml.innerHTML = '<div class="empty-state" style="padding:14px 0;">还没有回忆，添加第一段属于你们的记忆吧～</div>';
+    else ml.innerHTML = arr.map(m => `<div class="gf-mem">
+      <div class="gf-mem-date">${m.date}</div>
+      <div class="gf-mem-text">${escapeHtml(m.name)}</div>
+      <button class="gf-mem-del" data-mem="${m.id}">✕</button>
     </div>`).join('');
+  }
 }
-const btnLele = $('#btnAddLele');
-if (btnLele) {
-  btnLele.onclick = () => {
-    const name = $('#leleName').value.trim(), mood = $('#leleMood').value;
+
+/* 互动打卡点击 */
+const gfChecks = document.getElementById('gfChecks');
+if (gfChecks) {
+  gfChecks.addEventListener('click', e => {
+    const b = e.target.closest('.gf-check'); if (!b) return;
+    const k = b.dataset.key;
+    const t = todayKey();
+    S.gfInteract = S.gfInteract || {};
+    S.gfInteract[t] = S.gfInteract[t] || {};
+    S.gfInteract[t][k] = !S.gfInteract[t][k];
+    Store.save();
+    renderLele();
+  });
+}
+
+/* 自定义纪念日添加 */
+const btnAddGfCust = document.getElementById('btnAddGfCust');
+if (btnAddGfCust) {
+  btnAddGfCust.addEventListener('click', () => {
+    const name = (document.getElementById('gfCustName').value || '').trim();
+    const date = document.getElementById('gfCustDate').value;
+    let emoji = (document.getElementById('gfCustEmoji').value || '').trim();
+    if (!name) return toast('请填纪念日名');
+    if (!date) return toast('请选日期');
+    if (!emoji) emoji = '⭐';
+    S.gfCust = S.gfCust || [];
+    S.gfCust.push({ id: uid(), name, date, emoji });
+    Store.save();
+    document.getElementById('gfCustName').value = '';
+    document.getElementById('gfCustDate').value = '';
+    document.getElementById('gfCustEmoji').value = '';
+    renderLele(); renderNineGrid();
+    toast('纪念日已添加 ✨');
+  });
+}
+
+/* 自定义纪念日删除 */
+const gfCountdowns = document.getElementById('gfCountdowns');
+if (gfCountdowns) {
+  gfCountdowns.addEventListener('click', e => {
+    const dl = e.target.closest('[data-cd]');
+    if (!dl) return;
+    S.gfCust = (S.gfCust || []).filter(x => x.id !== +dl.dataset.cd);
+    Store.save(); renderLele(); renderNineGrid(); toast('已删除');
+  });
+}
+
+/* 回忆录添加 */
+const btnAddGfMem = document.getElementById('btnAddGfMem');
+if (btnAddGfMem) {
+  btnAddGfMem.addEventListener('click', () => {
+    const date = document.getElementById('gfMemDate').value;
+    const name = (document.getElementById('gfMemName').value || '').trim();
     if (!name) return toast('请写点什么');
-    S.lele.push({ id: uid(), name, mood, date: todayKey() });
-    Store.save(); $('#leleName').value = ''; renderLele(); renderNineGrid(); toast('已记录乐乐的小瞬间 🐾');
-  };
+    if (!date) return toast('请选日期');
+    S.gfMem = S.gfMem || [];
+    S.gfMem.push({ id: uid(), date, name });
+    Store.save();
+    document.getElementById('gfMemName').value = '';
+    renderLele();
+    toast('已记录一段回忆 💕');
+  });
 }
-const leleListEl = $('#leleList');
-if (leleListEl) {
-  leleListEl.addEventListener('click', e => {
-    const dl = e.target.closest('[data-led]');
-    if (dl) { S.lele = S.lele.filter(x => x.id !== +dl.dataset.led); Store.save(); renderLele(); renderNineGrid(); toast('已删除'); }
+
+/* 回忆录删除 */
+const gfMemList = document.getElementById('gfMemoryList');
+if (gfMemList) {
+  gfMemList.addEventListener('click', e => {
+    const dl = e.target.closest('[data-mem]');
+    if (!dl) return;
+    S.gfMem = (S.gfMem || []).filter(x => x.id !== +dl.dataset.mem);
+    Store.save(); renderLele(); toast('已删除');
   });
 }
 

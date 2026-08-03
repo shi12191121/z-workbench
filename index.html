@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803e" />
+<link rel="stylesheet" href="styles.css?v=20260803f" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -243,13 +243,19 @@
         <input type="text" class="td-todo-input" id="todoTodayInput" placeholder="最多 4 字，回车保存…" maxlength="4"/>
       </div>
 
-      <!-- 卡片 2：本周任务（蓝白渐变·日视图） -->
+      <!-- 卡片 2：今日固定行程（自填时间+行程，可勾选） -->
       <div class="td-card td-card-2">
         <div class="td-card-head">
-          <div class="td-card-title">本周任务</div>
-          <div class="td-range-pill" id="weekRangeText">本周</div>
+          <div class="td-card-title">⏰ 今日固定行程</div>
+          <div class="td-range-pill" id="fixedDateText">--</div>
         </div>
-        <div class="weekview" id="todoWeekView"></div>
+        <div class="fixed-list" id="fixedScheduleList"></div>
+        <div class="fixed-add-row">
+          <input type="text" class="form-input fixed-time-input" id="fixedTimeInput" placeholder="时间 07:00" maxlength="5" autocomplete="off"/>
+          <input type="text" class="form-input fixed-content-input" id="fixedContentInput" placeholder="行程内容（必填）" maxlength="60" autocomplete="off"/>
+          <button class="btn btn-sm" id="btnAddFixed">+ 添加</button>
+        </div>
+        <div class="fixed-hint">提示：勾选表示已完成；可自由添加/删除/按时间排序</div>
       </div>
 
       <!-- 卡片 3：Todo 清单（浅蓝→更浅蓝渐变） -->
@@ -734,7 +740,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803e"></script>
-<script src="app.js?v=20260803e"></script>
+<script src="cet6words.js?v=20260803f"></script>
+<script src="app.js?v=20260803f"></script>
 </body>
 </html>

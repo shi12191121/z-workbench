@@ -1,0 +1,9 @@
+# 后端/托管残留（非静态网站运行所需，且可能含本地数据）
+Procfile
+render.yaml
+server.js
+server.log
+package.json
+data/
+node_modules/
+.gitignore

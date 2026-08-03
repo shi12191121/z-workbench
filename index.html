@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#87CEEB" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="z的工作台" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/jpeg" href="avatar.jpg" />
+<link rel="apple-touch-icon" href="avatar.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<script>
+  // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input, textarea').forEach(el => {
+      if (!el.hasAttribute('autocomplete')) el.setAttribute('autocomplete', 'off');
+    });
+  });
+</script>
+<title>z的工作台</title>
+</head>
+<body>
+
+<!-- ============ 启动欢迎屏 ============ -->
+<div class="splash" id="splash">
+  <div class="splash-blob splash-blob-1"></div>
+  <div class="splash-blob splash-blob-2"></div>
+  <div class="splash-blob splash-blob-3"></div>
+  <div class="splash-inner">
+    <div class="splash-emblem">
+      <div class="splash-emblem-inner">
+        <span class="splash-emoji">🌟</span>
+      </div>
+    </div>
+    <div class="splash-date" id="splashDate">8月1日 · 周六</div>
+    <div class="splash-hi">嗨，<span class="splash-name">z</span></div>
+    <div class="splash-quote">真正的成长<br>是超越昨天的自己</div>
+    <div class="splash-sub">今天也要好好吃饭、好好流汗</div>
+    <button class="splash-btn" id="splashStart">
+      <span>开始今天</span>
+      <span class="splash-btn-spark">✨</span>
+    </button>
+    <div class="splash-tip">点一下，开启今日计划</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ============ 侧边栏（电脑/手机常驻固定）============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="profile">
+      <img class="avatar" src="avatar.jpg" alt="avatar" onerror="this.style.background='#b0d8f5';this.removeAttribute('src');" />
+      <div class="profile-info">
+        <div class="profile-name">z的工作台</div>
+        <div class="profile-sub">稳步前行 · 每天进步</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-page="growth"><span class="nav-emoji">🌟</span><span>今日成长</span></div>
+      <div class="nav-item" data-page="todo"><span class="nav-emoji">✅</span><span>今日待办</span></div>
+      <div class="nav-item" data-page="lele"><span class="nav-emoji lele-emoji">🐾</span><span>乐乐宝宝</span></div>
+      <div class="nav-item" data-page="video"><span class="nav-emoji">🎬</span><span>电脑剪辑</span></div>
+      <div class="nav-item" data-page="english"><span class="nav-emoji">📖</span><span>英语学习</span></div>
+      <div class="nav-item" data-page="fitness"><span class="nav-emoji">💪</span><span>健身计划</span></div>
+      <div class="nav-item" data-page="basketball"><span class="nav-emoji">🏀</span><span>篮球训练</span></div>
+      <div class="nav-item" data-page="diet"><span class="nav-emoji">🍱</span><span>饮食作息</span></div>
+      <div class="nav-item" data-page="douyin"><span class="nav-emoji">🎵</span><span>抖音创作</span></div>
+      <div class="nav-item" data-page="wps"><span class="nav-emoji">📑</span><span>WPS 学习</span></div>
+      <div class="nav-item" data-page="travel"><span class="nav-emoji">✈️</span><span>旅行计划</span></div>
+      <div class="nav-item" data-page="review"><span class="nav-emoji">📝</span><span>每日复盘</span></div>
+      <div class="nav-item" data-page="savings"><span class="nav-emoji">💰</span><span>存钱计划</span></div>
+      <div class="nav-item" data-page="bill"><span class="nav-emoji">🧾</span><span>每日账单</span></div>
+    </nav>
+
+    <div class="sidebar-footer">
+      © 2026 z
+      <div class="sync-badge" id="syncBadge" title="点击查看/切换数据身份"><span class="sync-dot"></span><span>同步模式</span></div>
+      <div class="data-tools">
+        <button class="data-tool-btn" id="btnExport" title="把本机数据导出成文件备份">导出数据</button>
+        <button class="data-tool-btn" id="btnImport" title="从文件导入数据（覆盖本机）">导入数据</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden/>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ 主内容 ============ -->
+  <main class="main">
+
+    <!-- ---------- 今日成长（首页）---------- -->
+    <section class="page-section active" id="page-growth">
+      <div class="page-header">
+        <h1 class="page-title">今日成长 <span class="sparkle">✦</span></h1>
+        <p class="page-subtitle">超越昨天的自己，从签到开始</p>
+      </div>
+
+      <!-- 顶部名言渐变卡（含日期 / 环形进度 / 进度条 / 连续打卡） -->
+      <div class="growth-quote">
+        <div class="gq-top">
+          <div class="gq-date" id="gqDate">8月1日 · 周六</div>
+          <div class="gq-ring">
+            <svg viewBox="0 0 60 60" class="ring-svg">
+              <circle cx="30" cy="30" r="26" class="ring-track"></circle>
+              <circle cx="30" cy="30" r="26" class="ring-fill" id="ringFill"></circle>
+            </svg>
+            <div class="ring-content">
+              <div class="ring-pct" id="ringPct">0%</div>
+              <div class="ring-label">今日进度</div>
+            </div>
+          </div>
+        </div>
+        <div class="gq-zh">真正的前进<br>是把每一件小事做完</div>
+        <div class="gq-en">True growth is to finish every small thing, one day at a time.</div>
+        <div class="gq-bottom">
+          <div class="gq-progress"><div class="gq-progress-fill" id="gqProgressFill"></div></div>
+          <div class="gq-meta">
+            <span class="gq-meta-l"><b id="gqDone">0</b>/<span id="gqTotal">0</span> 已完成</span>
+            <span class="gq-meta-r">连续打卡 <b id="gqStreak">0</b> 天</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日历签到（含周视图与月视图） -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📅 周历与月历</div>
+          <div class="cal-streak">本周签到 <b id="weekCheckCount">0</b> 天</div>
+        </div>
+        <div class="weekview" id="weekView"></div>
+        <div id="calendar" style="margin-top: 16px;"></div>
+      </div>
+
+      <!-- 功能区（14项：左侧栏除今日成长外） -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🧩 我的功能</div>
+          <div class="card-progress">14 项</div>
+        </div>
+        <div class="nine-grid" id="nineGrid"></div>
+      </div>
+
+    </section>
+
+    <!-- ---------- 每日计划 ---------- -->
+    <section class="page-section" id="page-daily">
+      <div class="page-header">
+        <h1 class="page-title">每日计划 <span class="sparkle">✦</span></h1>
+        <p class="page-subtitle">稳步前行，完成每一天既定目标</p>
+      </div>
+
+      <div class="tabs" data-tabs="daily">
+        <div class="tab active" data-tab="overview">日程总览</div>
+        <div class="tab" data-tab="goal">每日目标</div>
+        <div class="tab" data-tab="habit">习惯打卡</div>
+        <div class="tab" data-tab="record">记录台账</div>
+        <div class="tab" data-tab="monthly">月度总结</div>
+      </div>
+
+      <div data-tabpanel="daily">
+        <!-- 模块一：顶部进度 -->
+        <div class="top-progress">
+          <div class="tp-title">今日进度</div>
+          <div class="tp-count"><span id="doneCount">0</span><span class="total">/<span id="totalCount">0</span></span><span class="suffix">已完成</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+
+        <!-- 模块二：定时事项提醒 -->
+        <div class="card">
+          <div class="card-head"><div class="card-title">⏰ 定时事项提醒</div></div>
+          <p class="desc">自定义学习、运动、记账各类任务提醒时间，浏览器弹窗提醒事项。</p>
+          <button class="btn js-reminder-open">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            编辑提醒设置
+          </button>
+        </div>
+
+        <!-- 模块三：本周频次 -->
+        <div class="card">
+          <div class="card-head"><div class="card-title">📊 本周完成频次目标</div></div>
+          <div class="freq-grid">
+            <div class="freq-block freq-c1"><div class="freq-emoji">📚</div><div class="freq-num"><span data-freq="study">0</span><span class="total">/7</span></div><div class="freq-label">学习打卡</div></div>
+            <div class="freq-block freq-c2"><div class="freq-emoji">🏃</div><div class="freq-num"><span data-freq="sport">0</span><span class="total">/5</span></div><div class="freq-label">运动训练</div></div>
+            <div class="freq-block freq-c3"><div class="freq-emoji">💰</div><div class="freq-num"><span data-freq="bill">0</span><span class="total">/7</span></div><div class="freq-label">收支记录</div></div>
+            <div class="freq-block freq-c4"><div class="freq-emoji">📝</div><div class="freq-num"><span data-freq="review">0</span><span class="total">/7</span></div><div class="freq-label">每日复盘</div></div>
+          </div>
+        </div>
+
+        <!-- 模块四：今日清单 -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">✅ 今日待执行清单</div>
+            <div class="card-progress"><span id="todayDone">0</span>/<span id="todayTotal">0</span></div>
+          </div>
+          <div class="task-list" id="todayTaskList"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <input type="text" class="task-input" id="newTaskInput" placeholder="+ 新增今日任务（最多 4 字）" maxlength="4"/>
+            <button class="btn btn-sm" id="btnAddTask">添加</button>
+          </div>
+        </div>
+      </div>
+
+      <div data-tabpanel="daily" hidden><div class="card"><div class="empty-state"><div class="icon">🎯</div>「每日目标」等同于本页待办清单，请直接使用上方清单管理。</div></div></div>
+      <div data-tabpanel="daily" hidden><div class="card"><div class="empty-state"><div class="icon">✅</div>习惯打卡数据可在「每日复盘」中按周记录。</div></div></div>
+      <div data-tabpanel="daily" hidden><div class="card"><div class="empty-state"><div class="icon">📒</div>「记录台账」数据请前往「每日账单」页面录入。</div></div></div>
+      <div data-tabpanel="daily" hidden><div class="card"><div class="empty-state"><div class="icon">📊</div>「月度总结」正在积累数据中，完成越多打卡越精准。</div></div></div>
+    </section>
+
+    <!-- ---------- 今日待办（仿参考图）---------- -->
+    <section class="page-section" id="page-todo">
+      <div class="td-page-head">
+        <h1 class="td-page-title">任务清单</h1>
+        <p class="td-page-sub" id="tdPageSub"></p>
+      </div>
+
+      <!-- 卡片 1：今日待办（蓝→浅蓝渐变） -->
+      <div class="td-card td-card-1">
+        <div class="td-card-head">
+          <div class="td-card-title">今日待办</div>
+          <button class="td-icon-btn" data-add="today" title="添加任务">+</button>
+        </div>
+        <div class="td-todo-list" id="todoTodayList"></div>
+        <input type="text" class="td-todo-input" id="todoTodayInput" placeholder="最多 4 字，回车保存…" maxlength="4"/>
+      </div>
+
+      <!-- 卡片 2：本周任务（蓝白渐变·日视图） -->
+      <div class="td-card td-card-2">
+        <div class="td-card-head">
+          <div class="td-card-title">本周任务</div>
+          <div class="td-range-pill" id="weekRangeText">本周</div>
+        </div>
+        <div class="weekview" id="todoWeekView"></div>
+      </div>
+
+      <!-- 卡片 3：Todo 清单（浅蓝→更浅蓝渐变） -->
+      <div class="td-card td-card-3">
+        <div class="td-card-head">
+          <div class="td-card-title">Todo 清单</div>
+          <button class="td-icon-btn" data-add="todo" title="添加">+</button>
+        </div>
+        <div class="td-todo-list" id="todoList"></div>
+        <input type="text" class="td-todo-input" id="todoInput" placeholder="最多 4 字，回车保存…" maxlength="4"/>
+      </div>
+    </section>
+
+    <!-- ---------- 电脑剪辑 ---------- -->
+    <section class="page-section" id="page-video">
+      <div class="page-header"><h1 class="page-title">电脑剪辑</h1><p class="page-subtitle">记录每一段创作过程</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周剪辑条数</div><div class="stat-value"><span id="videoCount">0</span><span class="unit">条</span></div></div>
+        <div class="stat-card"><div class="stat-label">本周总时长</div><div class="stat-value"><span id="videoMinutes">0</span><span class="unit">分钟</span></div></div>
+        <div class="stat-card"><div class="stat-label">已完成</div><div class="stat-value"><span id="videoDone">0</span><span class="unit">条</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">剪辑项目</div></div>
+        <div class="add-row"><input type="text" class="form-input" id="videoName" placeholder="项目名称" maxlength="40" style="flex:2"/><input type="number" class="form-input" id="videoDur" placeholder="时长(分)" min="1" style="flex:1"/><button class="btn" id="btnAddVideo">+ 添加</button></div>
+        <div id="videoList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 英语学习（CET-6 备考） ---------- -->
+    <section class="page-section" id="page-english">
+      <div class="page-header"><h1 class="page-title">英语学习</h1><p class="page-subtitle">2026 六级冲刺 · 距考试还有 <span id="enCdDays">--</span> 天</p></div>
+
+      <!-- 问候区 + 备考数据（仿图） -->
+      <div class="en-greet">
+        <div class="en-greet-hi">👋 Hi，今天也要坚持背单词哦！</div>
+        <div class="en-stat-trio">
+          <div class="en-stat-cell clickable" id="enOpenWords" role="button" tabindex="0" aria-label="查看六级大纲词汇">
+            <div class="en-stat-val"><span id="enWordCount">0</span><span class="en-stat-unit">词</span></div>
+            <div class="en-stat-lab">大纲词汇 ›</div>
+          </div>
+          <div class="en-stat-cell">
+            <div class="en-stat-val"><span id="enLearnedWords">0</span><span class="en-stat-unit">词</span></div>
+            <div class="en-stat-lab">已学习单词数</div>
+          </div>
+          <div class="en-stat-cell">
+            <div class="en-stat-val"><span id="enStudyCount">0</span><span class="en-stat-unit">次</span></div>
+            <div class="en-stat-lab">已学习次数</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 倒计时卡 -->
+      <div class="en-countdown">
+        <div class="en-cd-top">
+          <span class="en-cd-date">📅 2026.12.13 六级笔试</span>
+          <span class="en-cd-remain">剩 <b id="enCdDays2">--</b> 天</span>
+        </div>
+        <div class="en-cd-bar"><div class="en-cd-fill" id="enCdBill"></div></div>
+        <div class="en-cd-sub" id="enCdSub">备考进行中</div>
+      </div>
+
+      <!-- 去不背单词背词（点跳转 APP） -->
+      <div class="en-book-card" id="enOpenBbdc" role="button" tabindex="0" aria-label="打开不背单词 APP 开始背诵">
+        <div class="en-book-emoji">📱</div>
+        <div class="en-book-right">
+          <div class="en-book-name">去不背单词背词</div>
+          <div class="en-book-num" id="enBookNum">六级大纲词</div>
+          <div class="en-book-sub">打开 APP 开始背诵 · 已学 <span id="enStudyCount2">0</span> 次</div>
+        </div>
+        <div class="en-book-go">›</div>
+      </div>
+
+      <!-- B站配套学习视频（按试卷板块分类，已按抖音/B站口碑推荐填好） -->
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head">
+          <div class="card-title">📺 B站配套学习视频</div>
+          <div class="card-sub">按试卷板块 · 抖音/B站口碑老师</div>
+        </div>
+        <div id="enBiliList"></div>
+        <div class="en-bili-add-title">＋ 自己添加课程</div>
+        <div class="en-add-bili">
+          <input type="text" class="form-input" id="enBiliName" placeholder="课程名 例：六级听力精讲" maxlength="40" style="flex:2"/>
+          <input type="text" class="form-input" id="enBiliUrl" placeholder="B 站视频链接（https://...）" maxlength="200" style="flex:3"/>
+          <button class="btn" id="btnAddBili">+ 添加</button>
+        </div>
+        <div class="en-bili-search">
+          <button class="btn-ghost" id="enBiliSearch">去 B 站搜：英语六级 ›</button>
+        </div>
+      </div>
+
+      <!-- 六级大纲词汇查看器（点“大纲词汇”卡片打开） -->
+      <div class="en-words-mask" id="enWordsMask" hidden>
+        <div class="en-words-panel">
+          <div class="en-words-bar">
+            <div class="en-words-bar-top">
+              <div class="en-words-title">六级大纲词汇 <span id="enWTotal">0</span></div>
+              <button class="en-words-close" id="enWordsClose" aria-label="关闭">✕</button>
+            </div>
+            <input type="text" class="form-input en-words-search" id="enWordsSearch" placeholder="搜索单词…" maxlength="40"/>
+            <div class="en-words-prog">已掌握 <span id="enWMastered">0</span> / <span id="enWTotal2">0</span> · 点单词可标记/取消“已掌握”</div>
+          </div>
+          <div class="en-words-list" id="enWordsList"></div>
+          <div class="en-words-foot">
+            <button class="btn-ghost" id="enWordsPrev">‹ 上一页</button>
+            <span class="en-words-page" id="enWordsPage">1 / 1</span>
+            <button class="btn-ghost" id="enWordsNext">下一页 ›</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 健身计划 ---------- -->
+    <section class="page-section" id="page-fitness">
+      <div class="page-header"><h1 class="page-title">健身计划</h1><p class="page-subtitle">自律给我自由，每一组都算数</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周训练</div><div class="stat-value"><span id="fitDays">0</span><span class="unit">/5</span></div></div>
+        <div class="stat-card"><div class="stat-label">总时长</div><div class="stat-value"><span id="fitMinutes">0</span><span class="unit">分钟</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">训练记录</div></div>
+        <div class="add-row"><input type="text" class="form-input" id="fitContent" placeholder="项目 例：哑铃推胸 4 组" maxlength="60"/><input type="number" class="form-input" id="fitMin" placeholder="分钟" min="1" style="flex:0 0 90px"/><button class="btn" id="btnAddFit">+ 记录</button></div>
+        <div id="fitList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 篮球训练 ---------- -->
+    <section class="page-section" id="page-basketball">
+      <div class="page-header"><h1 class="page-title">篮球训练</h1><p class="page-subtitle">球感、投篮、体能，一个都不能少</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周训练</div><div class="stat-value"><span id="bbDays">0</span><span class="unit">/3</span></div></div>
+        <div class="stat-card"><div class="stat-label">投篮命中</div><div class="stat-value"><span id="bbHit">0</span><span class="unit">球</span></div></div>
+        <div class="stat-card"><div class="stat-label">总时长</div><div class="stat-value"><span id="bbMinutes">0</span><span class="unit">分钟</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">训练记录</div></div>
+        <div class="add-row"><input type="text" class="form-input" id="bbContent" placeholder="训练内容 例：运球 + 三分球" maxlength="60"/><input type="number" class="form-input" id="bbMin" placeholder="分钟" min="1" style="flex:0 0 90px"/><button class="btn" id="btnAddBb">+ 记录</button></div>
+        <div id="bbList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- WPS 学习 ---------- -->
+    <section class="page-section" id="page-wps">
+      <div class="page-header"><h1 class="page-title">WPS 学习</h1><p class="page-subtitle">Word / Excel / PPT 三件套，逐步掌握</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">累计学习</div><div class="stat-value"><span id="wpsDays">0</span><span class="unit">天</span></div></div>
+        <div class="stat-card"><div class="stat-label">掌握技能</div><div class="stat-value"><span id="wpsSkills">0</span><span class="unit">项</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">学习记录</div></div>
+        <div class="add-row"><input type="text" class="form-input" id="wpsContent" placeholder="今天学的 WPS 技巧" maxlength="60"/><button class="btn" id="btnAddWps">+ 记录</button></div>
+        <div id="wpsList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 每日复盘 ---------- -->
+    <section class="page-section" id="page-review">
+      <div class="page-header"><h1 class="page-title">每日复盘</h1><p class="page-subtitle">反思让成长看得见</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周复盘</div><div class="stat-value"><span id="rvDays">0</span><span class="unit">/7</span></div></div>
+        <div class="stat-card"><div class="stat-label">累计复盘</div><div class="stat-value"><span id="rvTotal">0</span><span class="unit">天</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">今日复盘</div></div>
+        <div class="form-group"><label class="form-label">📌 今日成就</label><textarea class="form-input" id="rvAch" placeholder="今天最让你有成就感的事…" maxlength="300"></textarea></div>
+        <div class="form-group"><label class="form-label">💡 学到 / 感悟</label><textarea class="form-input" id="rvLearn" placeholder="今天学到的 / 领悟到的…" maxlength="300"></textarea></div>
+        <div class="form-group"><label class="form-label">🎯 明日重点</label><textarea class="form-input" id="rvNext" placeholder="明天最重要的一件事…" maxlength="300"></textarea></div>
+        <div style="display:flex;gap:10px;"><button class="btn" id="btnSaveReview">保存今日复盘</button><button class="btn btn-ghost" id="btnClearReview">清空</button></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">复盘历史</div></div>
+        <div id="rvList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 存钱计划 ---------- -->
+    <section class="page-section" id="page-savings">
+      <div class="page-header"><h1 class="page-title">存钱计划</h1><p class="page-subtitle">日积月累，每一分都是未来的底气</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本月已存</div><div class="stat-value">¥<span id="saveMonth">0</span></div></div>
+        <div class="stat-card"><div class="stat-label">累计总存款</div><div class="stat-value">¥<span id="saveTotal">0</span></div></div>
+        <div class="stat-card"><div class="stat-label">目标金额</div><div class="stat-value">¥<span id="saveGoal">10000</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">存款进度</div></div>
+        <div class="top-progress" style="margin-bottom:14px;">
+          <div class="tp-title">总进度</div>
+          <div class="tp-count"><span id="savePercent">0</span><span class="suffix">%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="saveFill"></div></div>
+        </div>
+        <div class="add-row"><input type="text" class="form-input" id="svName" placeholder="存钱来源/理由" maxlength="40" style="flex:2"/><input type="number" class="form-input" id="svAmount" placeholder="金额" min="0.01" step="0.01" style="flex:1"/><button class="btn" id="btnAddSv">+ 存入</button></div>
+        <div id="svList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 记账（每日账单 · 仿图重做）---------- -->
+    <section class="page-section" id="page-bill">
+      <div class="page-header bill-page-head">
+        <h1 class="page-title bill-title">🧾 记账</h1>
+        <p class="page-subtitle bill-sub"><span id="billDateHead">2026-08-01</span> · 每一笔都算数 🪶</p>
+      </div>
+
+      <!-- 本月概览 -->
+      <div class="card bill-card">
+        <div class="card-head bill-card-head">
+          <div class="card-title">📊 本月概览</div>
+          <div class="bill-set-budget" id="billSetBudget">🎯 设预算</div>
+        </div>
+        <div class="bill-overview">
+          <div class="bill-ov-cell ov-budget">
+            <div class="ov-val" id="bBudgetDisp">未设</div>
+            <div class="ov-lbl">预算</div>
+          </div>
+          <div class="bill-ov-cell ov-income" id="bIncomeCard" role="button" tabindex="0">
+            <div class="ov-val">¥<span id="bIncome">0</span></div>
+            <div class="ov-lbl">收入 ›</div>
+          </div>
+          <div class="bill-ov-cell ov-expense" id="bExpenseCard" role="button" tabindex="0">
+            <div class="ov-val">¥<span id="bExpense">0</span></div>
+            <div class="ov-lbl">支出 ›</div>
+          </div>
+        </div>
+        <div class="bill-today-input">
+          <span class="bti-lbl">今日收入 ¥</span>
+          <input type="number" class="form-input bti-in" id="bTodayIncome" placeholder="0.00" min="0" step="0.01"/>
+          <button class="btn btn-sm bti-btn" id="btnAddTodayIncome">录入</button>
+        </div>
+      </div>
+
+      <!-- 快速记一笔 -->
+      <div class="card bill-card">
+        <div class="card-head bill-card-head">
+          <div class="card-title">🖊️ 快速记一笔</div>
+          <div class="bill-card-right">
+            <span class="bill-cur-date" id="billCurDate">2026-08-01</span>
+            <button class="bill-edit-date" id="billEditDate" title="切换日期">✎</button>
+          </div>
+        </div>
+        <div class="bill-month-row">
+          <button class="bill-mnav" id="billMonthPrev">‹</button>
+          <span class="bill-month-text" id="billMonthText">8月 2026</span>
+          <button class="bill-mnav" id="billMonthNext">›</button>
+          <span class="bill-month-sum" id="billMonthSum">今日 ¥0.00 · 支 ¥0.00</span>
+        </div>
+        <!-- 7天日期横排 -->
+        <div class="bill-week" id="billWeek">
+          <div class="bw-dow">日</div><div class="bw-dow">一</div><div class="bw-dow">二</div><div class="bw-dow">三</div><div class="bw-dow">四</div><div class="bw-dow">五</div><div class="bw-dow">六</div>
+        </div>
+        <!-- 支出 / 收入 切换 -->
+        <div class="bill-type-row">
+          <button class="bill-type-btn active" data-btype="expense">📝 支出</button>
+          <button class="bill-type-btn" data-btype="income">💰 收入</button>
+        </div>
+        <!-- 类目网格 -->
+        <div class="bill-cat-grid" id="billCatGrid">
+          <button class="bill-cat" data-cat="餐饮">🍱<span>餐饮</span></button>
+          <button class="bill-cat" data-cat="交通">🚗<span>交通</span></button>
+          <button class="bill-cat" data-cat="购物">🛍️<span>购物</span></button>
+          <button class="bill-cat" data-cat="娱乐">🎮<span>娱乐</span></button>
+          <button class="bill-cat" data-cat="生活">🏠<span>生活</span></button>
+          <button class="bill-cat" data-cat="通讯">📱<span>通讯</span></button>
+          <button class="bill-cat" data-cat="医疗">💊<span>医疗</span></button>
+          <button class="bill-cat" data-cat="其他">✨<span>其他</span></button>
+        </div>
+        <!-- 其他类目备注（仅选“其他”时出现） -->
+        <div class="bill-note-row" id="billNoteRow" style="display:none;">
+          <input type="text" class="form-input bill-note-input" id="billNote" placeholder="备注这个“其他”是什么（如：电费、礼物）" maxlength="20" autocomplete="off"/>
+        </div>
+        <!-- 金额输入 + 记一笔 -->
+        <div class="bill-amount-row">
+          <span class="bar-yen">¥</span>
+          <input type="number" class="form-input bar-input" id="bAmount" placeholder="金额" min="0.01" step="0.01"/>
+          <button class="bill-calc-btn" id="billCalc" title="计算器">🧮</button>
+          <button class="btn bar-btn" id="btnAddBill">记一笔</button>
+        </div>
+      </div>
+
+      <!-- 今日消费清单 -->
+      <div class="card bill-card">
+        <div class="card-head bill-card-head">
+          <div class="card-title">🧾 今日消费清单</div>
+          <div class="bill-card-right bill-list-sum">共 ¥<span id="bListSum">0.00</span></div>
+        </div>
+        <div id="bList"></div>
+      </div>
+
+      <!-- 最近账目（保留原历史功能） -->
+      <div class="card bill-card">
+        <div class="card-head bill-card-head">
+          <div class="card-title">📒 最近账目</div>
+          <div class="bill-card-right bill-card-right-sub">共 <span id="bAllCount">0</span> 笔</div>
+        </div>
+        <div id="bListAll"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 抖音创作 ---------- -->
+    <section class="page-section" id="page-douyin">
+      <div class="page-header"><h1 class="page-title">抖音创作</h1><p class="page-subtitle">灵感、脚本、发布，一站式记录你的内容</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周发布</div><div class="stat-value"><span id="dyWeek">0</span><span class="unit">条</span></div></div>
+        <div class="stat-card"><div class="stat-label">累计作品</div><div class="stat-value"><span id="dyTotal">0</span><span class="unit">条</span></div></div>
+        <div class="stat-card"><div class="stat-label">已发布</div><div class="stat-value"><span id="dyDone">0</span><span class="unit">条</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">🎬 创作清单</div></div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="dyName" placeholder="作品主题 例：一周穿搭分享" maxlength="50" style="flex:2"/>
+          <select class="form-input" id="dyPlat" style="flex:0 0 110px"><option value="抖音">抖音</option><option value="B站">B站</option><option value="小红书">小红书</option><option value="视频号">视频号</option></select>
+          <button class="btn" id="btnAddDy">+ 添加</button>
+        </div>
+        <div id="dyList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 饮食作息 ---------- -->
+    <section class="page-section" id="page-diet">
+      <div class="page-header"><h1 class="page-title">饮食作息</h1><p class="page-subtitle">好好吃饭，规律作息，身体是革命的本钱</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">本周饮食打卡</div><div class="stat-value"><span id="dietWeek">0</span><span class="unit">/7</span></div></div>
+        <div class="stat-card"><div class="stat-label">睡眠目标</div><div class="stat-value"><span id="dietSleep">7.5</span><span class="unit">小时</span></div></div>
+        <div class="stat-card"><div class="stat-label">今日三餐</div><div class="stat-value"><span id="dietMeals">0</span><span class="unit">/3</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">🍽 今日三餐打卡</div></div>
+        <div class="meal-row" id="mealRow">
+          <button class="meal-btn" data-meal="b"><span class="mb-emoji">🌅</span><span>早餐</span><span class="mb-state" id="mealB">未打卡</span></button>
+          <button class="meal-btn" data-meal="l"><span class="mb-emoji">☀️</span><span>午餐</span><span class="mb-state" id="mealL">未打卡</span></button>
+          <button class="meal-btn" data-meal="d"><span class="mb-emoji">🌙</span><span>晚餐</span><span class="mb-state" id="mealD">未打卡</span></button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">⏰ 作息目标</div></div>
+        <div class="add-row">
+          <div class="form-input" style="flex:1;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;color:var(--text-body)">睡眠目标</span>
+            <input type="number" id="sleepGoal" min="4" max="12" step="0.5" style="width:54px;border:none;background:transparent;font-size:16px;font-weight:700;color:var(--text-title);outline:none" value="7.5"/> 小时
+          </div>
+          <div class="form-input" style="flex:1;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;color:var(--text-body)">起床时间</span>
+            <input type="time" id="wakeTime" style="border:none;background:transparent;font-size:15px;font-weight:700;color:var(--text-title);outline:none" value="07:00"/>
+          </div>
+          <button class="btn" id="btnSaveDiet">保存</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 旅行计划 ---------- -->
+    <section class="page-section" id="page-travel">
+      <div class="page-header"><h1 class="page-title">旅行计划</h1><p class="page-subtitle">把想去的远方，一个个放进清单</p></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">想去</div><div class="stat-value"><span id="tvWant">0</span><span class="unit">个</span></div></div>
+        <div class="stat-card"><div class="stat-label">已出发</div><div class="stat-value"><span id="tvDone">0</span><span class="unit">个</span></div></div>
+        <div class="stat-card"><div class="stat-label">累计目的地</div><div class="stat-value"><span id="tvTotal">0</span><span class="unit">个</span></div></div>
+      </div>
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><div class="card-title">🧳 目的地清单</div></div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="tvName" placeholder="目的地 例：云南大理" maxlength="40" style="flex:2"/>
+          <input type="text" class="form-input" id="tvDate" placeholder="计划日期" maxlength="20" style="flex:1"/>
+          <button class="btn" id="btnAddTv">+ 添加</button>
+        </div>
+        <div id="tvList"></div>
+      </div>
+    </section>
+
+    <!-- ---------- 乐乐宝宝 ---------- -->
+    <section class="page-section" id="page-lele">
+      <div class="page-header"><h1 class="page-title">乐乐宝宝 🐾 <span class="sparkle">✦</span></h1><p class="page-subtitle">把生活里的小柔软，也放进工作台</p></div>
+
+      <div class="card lele-hero">
+        <div class="lele-avatar">🐾</div>
+        <div class="lele-quote">今天的小乐乐，也被你惦记着</div>
+        <div class="lele-sub">记录它的小瞬间 · 体重 · 心情 · 糗事</div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <div class="card-title">📔 乐乐日记</div>
+          <div class="card-progress"><span id="leleCount">0</span> 条</div>
+        </div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="leleName" placeholder="小事件 例：今天吃了一整根磨牙棒" maxlength="60" style="flex:2"/>
+          <select class="form-input" id="leleMood" style="flex:0 0 100px">
+            <option value="开心">😺 开心</option>
+            <option value="撒娇">🥺 撒娇</option>
+            <option value="贪吃">🍗 贪吃</option>
+            <option value="犯困">😴 犯困</option>
+            <option value="捣乱">🙀 捣乱</option>
+          </select>
+          <button class="btn" id="btnAddLele">+ 记录</button>
+        </div>
+        <div id="leleList"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 弹窗：编辑提醒 -->
+<div class="modal-mask" id="reminderModal">
+  <div class="modal">
+    <div class="modal-title">⏰ 编辑提醒设置</div>
+    <div class="form-group"><label class="form-label">提醒时间（多个用逗号分隔，如 09:00, 14:30, 21:00）</label><input type="text" class="form-input" id="reminderTime" placeholder="09:00, 14:30, 21:00"/></div>
+    <div class="form-group"><label class="form-label">提醒内容</label><textarea class="form-input" id="reminderText" placeholder="每天到点弹窗提醒你～"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-ghost" id="btnCloseReminder">取消</button><button class="btn" id="btnSaveReminder">保存</button></div>
+  </div>
+</div>
+
+<!-- 弹窗：编辑任务 -->
+<div class="modal-mask" id="taskModal">
+  <div class="modal">
+    <div class="modal-title">编辑任务</div>
+    <input type="hidden" id="editTaskId"/>
+    <div class="form-group"><label class="form-label">任务名称</label><input type="text" class="form-input" id="editTaskName" maxlength="4"/></div>
+    <div class="form-group"><label class="form-label">建议时间段</label><input type="text" class="form-input" id="editTaskTime" placeholder="例：09:00 - 10:00"/></div>
+    <div class="form-group"><label class="form-label">每周目标频次（次/周）</label><input type="number" class="form-input" id="editTaskFreq" min="1" max="7" value="3"/></div>
+    <div class="modal-actions"><button class="btn btn-ghost" id="btnCloseTask">取消</button><button class="btn" id="btnSaveTask">保存</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 弹窗：月度统计（点击本月概览·收入/支出 → 打开） -->
+<div class="modal-mask" id="billStatsModal">
+  <div class="modal bill-stats-modal">
+    <div class="modal-title">📈 月度统计</div>
+    <div class="bill-stats-month-row">
+      <button class="bill-mnav" id="bsMonthPrev" title="上个月">‹</button>
+      <span class="bill-stats-month-text" id="bsMonthText">8月 2026</span>
+      <button class="bill-mnav" id="bsMonthNext" title="下个月">›</button>
+    </div>
+    <div class="bill-stats-summary">
+      <div class="bs-summary-cell"><div class="bs-sum-label">收入</div><div class="bs-sum-val bs-green" id="bsIncome">¥0</div></div>
+      <div class="bs-summary-cell"><div class="bs-sum-label">支出</div><div class="bs-sum-val bs-red" id="bsExpense">¥0</div></div>
+      <div class="bs-summary-cell"><div class="bs-sum-label">结余</div><div class="bs-sum-val" id="bsBalance">¥0</div></div>
+    </div>
+    <div class="bill-stats-section-title">📊 每日支出趋势</div>
+    <div class="bill-stats-chart" id="bsChart"></div>
+    <div class="bill-stats-section-title">📋 类目汇总</div>
+    <div class="bill-stats-table" id="bsTable"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" id="btnBsClose">关闭</button></div>
+  </div>
+</div>
+
+<!-- 弹窗：设置本月预算（替换浏览器原生 prompt） -->
+<div class="modal-mask" id="billBudgetModal">
+  <div class="modal bill-budget-modal">
+    <div class="modal-title">🎯 设置本月预算</div>
+    <p class="bill-budget-desc">输入本月预算金额（¥）。留空或填 0 表示清除预算。</p>
+    <div class="form-group">
+      <label class="form-label">本月预算（¥）</label>
+      <div class="bill-budget-input-wrap">
+        <span class="bill-budget-yen">¥</span>
+        <input type="number" class="form-input bill-budget-input" id="bsBudgetInput" placeholder="0" min="0" step="0.01" autocomplete="off"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnBsBudgetCancel">取消</button>
+      <button class="btn" id="btnBsBudgetSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗：GitHub 同步设置 -->
+<div class="modal-mask" id="ghModal">
+  <div class="modal">
+    <div class="modal-title">☁️ GitHub 同步设置</div>
+    <p class="desc" style="margin:0 0 12px">用你的 GitHub 私有仓库当「永远在线」的同步后端，手机/电脑共用同一份数据，电脑关机也不影响。令牌仅在本地保存，不会上传。</p>
+    <div class="form-group"><label class="form-label">个人访问令牌 PAT</label><input type="password" class="form-input" id="ghToken" placeholder="ghp_xxx 或 github_pat_xxx" autocomplete="off"/></div>
+    <div class="form-group"><label class="form-label">仓库（owner/repo）</label><input type="text" class="form-input" id="ghRepo" placeholder="你的用户名/z-workbench-sync" autocomplete="off"/></div>
+    <div class="form-group"><label class="form-label">文件路径（默认即可）</label><input type="text" class="form-input" id="ghPath" placeholder="z-workbench-sync.json"/></div>
+    <p class="desc" style="margin:0 0 12px">PAT 只需 <b>repo</b> 权限，且建议只授权这一个私有仓库。打开 github.com → Settings → Developer settings → Personal access tokens 创建。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnGhClear">清除</button>
+      <button class="btn btn-ghost" id="btnGhClose">取消</button>
+      <button class="btn" id="btnGhSave">保存并同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase 兼容版 SDK（未配置时不加载也不影响本地使用）-->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="cet6words.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

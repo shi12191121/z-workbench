@@ -1,0 +1,18 @@
+{
+  "name": "z的工作台",
+  "short_name": "z工作台",
+  "description": "z 的个人工作台 - 今日成长、计划、学习、健身、存钱、复盘一站式管理（云端永久同步）",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#f0f7ff",
+  "theme_color": "#87CEEB",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["productivity", "lifestyle", "education"],
+  "icons": [
+    { "src": "avatar.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "avatar.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}

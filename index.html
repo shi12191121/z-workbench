@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803f" />
+<link rel="stylesheet" href="styles.css?v=20260803g" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -38,6 +38,18 @@
     <p class="wx-jump-text">（建议把本页「添加到主屏幕」，以后像 App 一样从桌面打开，跳转最稳）</p>
     <div class="modal-actions">
       <button class="btn" id="wxJumpOk">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 不背单词唤起确认（绕过浏览器自动跳深链拦截） -->
+<div class="modal-mask" id="bbdcModal" hidden>
+  <div class="modal wx-jump-modal">
+    <div class="modal-title">📱 打开不背单词</div>
+    <p class="wx-jump-text">即将为你唤起「不背单词」APP 开始背诵。点「打开 APP」即可跳转（手机已装会自动进入）。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="bbdcCancel">取消</button>
+      <button class="btn" id="bbdcOpen">打开 APP</button>
     </div>
   </div>
 </div>
@@ -740,7 +752,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803f"></script>
-<script src="app.js?v=20260803f"></script>
+<script src="cet6words.js?v=20260803g"></script>
+<script src="app.js?v=20260803g"></script>
 </body>
 </html>

@@ -55,7 +55,7 @@ function defaultState() {
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
-    courses: [], videos: [],
+    courses: [], videos: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
   };
@@ -837,7 +837,7 @@ function renderCourseDetail(c) {
 /* 电脑剪辑 · 剪辑项目 */
 function renderVideos() {
   const a = document.getElementById('projCount'); if (a) a.textContent = S.videos.length;
-  const b = document.getElementById('projMinutes'); if (b) b.textContent = S.videos.reduce((s, v) => s + (+v.dur || 0), 0);
+  updateDurationStat();
   const d = document.getElementById('projDone'); if (d) d.textContent = S.videos.filter(v => v.done).length;
   const t = document.getElementById('projTotal'); if (t) t.textContent = S.videos.length;
   renderList(S.videos, '#videoList', v => `
@@ -847,6 +847,59 @@ function renderVideos() {
       <button class="icon-btn" data-vd="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
     </div>`, '还没有剪辑项目，添加一个开始吧～');
 }
+
+/* ===== 电脑剪辑 · 学习计时 ===== */
+let studyTimer = null;
+function studyTotalSeconds() {
+  let s = (S.studySeconds || 0);
+  if (S._studyStartTs) s += (Date.now() - S._studyStartTs) / 1000;
+  return s;
+}
+function fmtClock(sec) {
+  sec = Math.floor(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const pad = n => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+function updateDurationStat() {
+  const el = document.getElementById('projMinutes');
+  if (el) {
+    const proj = (S.videos || []).reduce((s, v) => s + (+v.dur || 0), 0);
+    el.textContent = proj + Math.floor(studyTotalSeconds() / 60);
+  }
+}
+function renderStudyTimer() {
+  const clock = document.getElementById('stClock');
+  const toggle = document.getElementById('stToggle');
+  const state = document.getElementById('stState');
+  const total = document.getElementById('stTotal');
+  const timing = !!S._studyStartTs;
+  if (clock) clock.textContent = fmtClock(studyTotalSeconds());
+  if (toggle) toggle.textContent = timing ? '■ 停止并记录' : '▶ 开始学习';
+  if (state) { state.textContent = timing ? '计时中…' : '未开始'; state.classList.toggle('on', timing); }
+  if (total) total.textContent = Math.floor(studyTotalSeconds() / 60);
+  updateDurationStat();
+}
+function startStudy() {
+  if (S._studyStartTs) return;
+  S._studyStartTs = Date.now();
+  Store.save();
+  if (studyTimer) clearInterval(studyTimer);
+  studyTimer = setInterval(renderStudyTimer, 1000);
+  renderStudyTimer();
+}
+function stopStudy() {
+  if (!S._studyStartTs) return;
+  const inc = (Date.now() - S._studyStartTs) / 1000;
+  S.studySeconds = (S.studySeconds || 0) + inc;
+  S._studyStartTs = null;
+  if (studyTimer) { clearInterval(studyTimer); studyTimer = null; }
+  Store.save();
+  renderStudyTimer();
+  toast('已记录本次学习 ' + fmtClock(inc));
+}
+const stToggleEl = document.getElementById('stToggle');
+if (stToggleEl) stToggleEl.addEventListener('click', () => { if (S._studyStartTs) stopStudy(); else startStudy(); });
 
 /* 课程交互（事件委托） */
 const courseListEl = document.getElementById('courseList');
@@ -2005,6 +2058,7 @@ function renderAll() {
   renderTodoToday();
   renderFixedSchedule();
   renderTodos(); renderCourses(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
+  renderStudyTimer();
   renderWps(); renderReview(); renderSavings(); renderBills();
   renderDouyin(); renderDiet(); renderTravel(); renderLele();
   renderFreq();
@@ -2075,6 +2129,9 @@ Store.onChange(() => { S = Store.state; renderAll(); });
 S = defaultState();
 Store.init();
 S = Store.state;
+// 学习计时：若上次未停止，自动续计（避免刷新丢计时）
+if (S._studyStartTs) { studyTimer = setInterval(renderStudyTimer, 1000); }
+renderStudyTimer();
 // 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
 if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
 switchPage(S.currentPage || 'growth');

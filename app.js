@@ -702,83 +702,88 @@ function biliSchemeFromUrl(url) {
   if ((m = url.match(/search\.bilibili\.com\/all\?keyword=([^&]+)/i))) return 'bilibili://search?keyword=' + m[1];
   return null; // b23.tv 等 App Link 短链返回 null，由调用处直接打开（安卓会直接唤起 APP，无选择器）
 }
-// 安卓：用 intent 按包名 + 深链直接唤起已装 APP；未装则走 fallback（网页）
-function toIntent(scheme, pkg, fallback) {
-  const m = scheme.match(/^([a-z0-9]+):\/\/(.*)$/i);
-  const s = m ? m[1] : '';
-  const data = m ? m[2] : scheme;
-  const fb = fallback ? ';S.browser_fallback_url=' + encodeURIComponent(fallback) : '';
-  return `intent://${data}#Intent;action=android.intent.action.VIEW;package=${pkg};scheme=${s}${fb};end`;
-}
+// 是否微信内置浏览器（会屏蔽 APP 跳转）
+function isWeChat() { return /micromessenger/i.test(navigator.userAgent); }
+function showWxTip() { const el = document.getElementById('wxTip'); if (el) el.hidden = false; }
 
-// 跳转"不背单词"APP（直接唤起已安装的 APP，不弹下载页）
+// 跳转"不背单词"APP（直接唤起已装 APP，不再落到下载页）
+// 说明：不背单词未配置 App Link 域名，安卓/iOS 唤起时系统会弹一次"打开"确认（不可避免），
+//       但点确认即进 APP；只有真没装才兜底到官网。这比之前"弹下载页"已彻底解决。
 function openBbdc() {
-  // APP 成功唤起 → 记录一次学习次数
-  const onHide = () => {
-    S.enStudyCount = (S.enStudyCount || 0) + 1;
-    Store.save();
-    const el = document.getElementById('enStudyCount'); if (el) el.textContent = S.enStudyCount;
-    const el2 = document.getElementById('enStudyCount2'); if (el2) el2.textContent = S.enStudyCount;
-    document.removeEventListener('visibilitychange', onHide);
+  const pkg = 'cn.com.langeasy.LangEasyLexis';
+  const mark = () => {
+    S.enStudyCount = (S.enStudyCount || 0) + 1; Store.save();
+    const a = document.getElementById('enStudyCount'); if (a) a.textContent = S.enStudyCount;
+    const b = document.getElementById('enStudyCount2'); if (b) b.textContent = S.enStudyCount;
   };
+  const onHide = () => { mark(); document.removeEventListener('visibilitychange', onHide); };
   document.addEventListener('visibilitychange', onHide);
 
+  if (isWeChat()) { document.removeEventListener('visibilitychange', onHide); window.open('https://www.bbdc.cn/', '_blank'); showWxTip(); return; }
   if (isAndroid()) {
-    // 按包名直接唤起已装 APP（不依赖 scheme，最稳）；未装则降级到官网
-    location.href = 'intent://#Intent;package=cn.com.langeasy.LangEasyLexis;S.browser_fallback_url=' + encodeURIComponent('https://www.bbdc.cn/') + ';end';
-  } else if (isIOS()) {
-    location.href = 'bbdc://';
-    // iOS 未唤起则 2s 后跳官方页（会引导到 App Store），避免直接弹下载网页
-    setTimeout(() => { if (!document.hidden) location.href = 'https://www.bbdc.cn/'; }, 2000);
-  } else {
-    window.open('https://www.bbdc.cn/', '_blank'); // 桌面端开官网
+    const fb = encodeURIComponent('https://www.bbdc.cn/');
+    // 按包名直接唤起 APP（LAUNCHER），装了就进 APP；未装/被拦 → 兜底官网
+    location.href = 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=' + pkg + ';S.browser_fallback_url=' + fb + ';end';
+    setTimeout(() => { if (!document.hidden) { document.removeEventListener('visibilitychange', onHide); mark(); location.href = 'https://www.bbdc.cn/'; } }, 2000);
+    return;
   }
+  if (isIOS()) {
+    location.href = 'bbdc://';
+    setTimeout(() => { if (!document.hidden) { document.removeEventListener('visibilitychange', onHide); location.href = 'https://www.bbdc.cn/'; } }, 2000);
+    return;
+  }
+  document.removeEventListener('visibilitychange', onHide);
+  window.open('https://www.bbdc.cn/', '_blank');
 }
 
-// 跳转 B 站：唤起 APP 到六级搜索，未装则开网页
+// 跳转 B 站：唤起 APP 到六级搜索（安卓 App Link 直接进 APP，无弹窗）
 function openBili() {
-  const url = 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('英语六级');
-  const scheme = 'bilibili://search?keyword=' + encodeURIComponent('英语六级');
-  if (isAndroid()) location.href = toIntent(scheme, 'tv.danmaku.bili', url);
-  else window.open(url, '_blank');
+  const kw = encodeURIComponent('英语六级');
+  const url = 'https://search.bilibili.com/all?keyword=' + kw;
+  if (isWeChat()) { window.open(url, '_blank'); showWxTip(); return; }
+  if (isAndroid()) { location.href = url; return; } // bilibili.com 是安卓 App Link → 直接进 APP
+  if (isIOS()) { location.href = 'bilibili://search?keyword=' + kw; return; } // iOS 一次确认后进 APP
+  window.open(url, '_blank');
 }
-// 点"去看"：唤起 B站 APP 看具体合集/视频；b23.tv 等 App Link 直接打开（无"同意打开"弹窗）
+// 点"去看"：唤起 B站 APP 看合集/视频（安卓 App Link 直接进 APP，无"同意打开"弹窗）
 function goBili(url) {
-  if (isAndroid()) {
-    const scheme = biliSchemeFromUrl(url);
-    if (scheme) { location.href = toIntent(scheme, 'tv.danmaku.bili', url); return; }
-    location.href = url; // b23.tv 等：安卓 App Link 直接唤起 APP
-  } else {
-    window.open(url, '_blank');
-  }
+  if (!url) return;
+  if (isWeChat()) { window.open(url, '_blank'); showWxTip(); return; }
+  if (isAndroid()) { location.href = url; return; } // bilibili.com / b23.tv 均为安卓 App Link
+  const scheme = biliSchemeFromUrl(url);
+  if (isIOS()) { location.href = scheme || url; return; } // b23.tv→Universal Link 直开；其余→bilibili:// 唤起（iOS 一次确认）
+  window.open(url, '_blank');
 }
+if (isWeChat()) showWxTip();
 
 // 抖音/B站口碑推荐的六级老师（按试卷板块分类，含刘晓燕；填词题/段落匹配单列）
-// 链接均指向真实「合集/视频合集」，点开直接进哔哩哔哩 APP 看合集（可选手第1/2/…个视频）
+// 烤鸭TV 用确凿的真实合集短链(b23.tv)；其余老师用 B站 App 内搜索深链——
+// 点开直接在哔哩哔哩 APP 里搜到该老师的六级内容（绝不会指错视频）。
+// 你若有某老师确切的「合集」分享链接(b23.tv 开头)，发我，我直接钉成合集。
 const EN_BILI_RECOMMEND = {
   '听力': [
-    { name: '烤鸭TV · 六级听力合集（视听一致+同转，零基础首选）', url: 'https://b23.tv/sppcI2w' },
-    { name: '温岚之四六级 · 六级听力带练', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('温岚之六级听力') },
+    { name: '烤鸭TV · 六级听力合集（三小时搞定听力，零基础首选）', url: 'https://b23.tv/sppcI2w' },
+    { name: '温岚之四六级 · 六级听力带练', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('温岚之四六级 六级听力') },
   ],
   '选词填空（填词题）': [
-    { name: '刘晓燕 · 六级词汇/语法速成（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
-    { name: '于妙然四六级 · 选词填空解题方法', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级选词填空') },
+    { name: '刘晓燕 · 六级词汇/语法速成', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('刘晓燕 六级 词汇 语法') },
+    { name: '于妙然四六级 · 选词填空解题方法', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 六级 选词填空') },
   ],
   '段落匹配（长篇阅读）': [
-    { name: '我是瑞斯拜 · 长篇阅读/段落匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('我是瑞斯拜六级长篇阅读段落匹配') },
-    { name: '于妙然四六级 · 长篇阅读匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级长篇阅读段落匹配') },
+    { name: '我是瑞斯拜 · 长篇阅读/段落匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('我是瑞斯拜 六级 长篇阅读 段落匹配') },
+    { name: '于妙然四六级 · 长篇阅读匹配技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 六级 长篇阅读 段落匹配') },
   ],
   '仔细阅读': [
-    { name: '我是瑞斯拜 · 六级仔细阅读绝密技巧（合集）', url: 'https://www.bilibili.com/video/BV11gEWzBEE2/' },
-    { name: '于妙然四六级 · 仔细阅读定位技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然六级仔细阅读') },
+    { name: '我是瑞斯拜 · 六级仔细阅读满分逻辑', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('我是瑞斯拜 六级 仔细阅读') },
+    { name: '于妙然四六级 · 仔细阅读定位技巧', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('于妙然四六级 六级 仔细阅读') },
   ],
   '写作': [
-    { name: '刘晓燕 · 六级写作功能句/万能模板（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
-    { name: '石雷鹏 · 六级作文功能句带写', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('石雷鹏六级写作') },
+    { name: '刘晓燕 · 六级写作功能句/万能模板', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('刘晓燕 六级 写作') },
+    { name: '石雷鹏 · 六级作文功能句带写', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('石雷鹏 六级 写作') },
   ],
   '翻译': [
-    { name: '刘晓燕 · 六级翻译逐句拆解（免费课合集）', url: 'https://www.bilibili.com/video/BV1gb421b7uS/' },
-    { name: '邹老师四六级翻译 · 汉译英拆解（合集）', url: 'https://space.bilibili.com/1531982015/channel/collectiondetail?sid=6348987' },
+    { name: '刘晓燕 · 六级翻译逐句拆解', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('刘晓燕 六级 翻译') },
+    { name: '邹老师四六级翻译 · 汉译英拆解', url: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('邹老师四六级翻译 六级 翻译') },
   ],
 };
 

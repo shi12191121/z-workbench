@@ -94,7 +94,7 @@ function defaultState() {
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: [],
-    courses: [], videos: [], studySeconds: 0, _studyStartTs: 0,
+    courses: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
   };
@@ -324,10 +324,14 @@ const monthBillExpense = () => S.bills.filter(b => b.type === 'expense' && (b.da
 const dietWeekCount = () => { const m = S.diet && S.diet.meals || {}; return new Set(Object.keys(m).filter(k => inWeek(k) && (m[k].b || m[k].l || m[k].d))).size; };
 
 /* 本周频次（从真实活动数据派生，自动联动）*/
+function fitnessWeekCount() {
+  const log = (S.fitness && S.fitness.log) || {};
+  return Object.keys(log).filter(k => inWeek(k) && Object.values(log[k]).some(Boolean)).length;
+}
 function computeWeeklyFreq() {
   return {
     study:  S.english.filter(x => inWeek(x.date)).length,
-    sport:  S.fitness.filter(x => inWeek(x.date)).length + S.basketball.filter(x => inWeek(x.date)).length,
+    sport:  fitnessWeekCount() + S.basketball.filter(x => inWeek(x.date)).length,
     bill:   S.bills.filter(x => inWeek(x.date)).length,
     review: S.reviews.filter(x => inWeek(x.date)).length
   };
@@ -414,7 +418,7 @@ function renderNineGrid() {
     { icon: '💕', label: '乐乐宝宝', val: `${(S.gfMem||[]).length} 回忆`, page: 'lele', grad: 'grad-ice' },
     { icon: '🎬', label: '电脑剪辑', val: `${S.videos.length} 条`, page: 'video', grad: 'grad-ice' },
     { icon: '📖', label: '英语学习', val: `${weekCount(S.english)} 天`, page: 'english', grad: 'grad-fog' },
-    { icon: '💪', label: '健身计划', val: `${weekCount(S.fitness)} 次`, page: 'fitness', grad: 'grad-sky' },
+    { icon: '💪', label: '健身计划', val: `${fitnessWeekCount()} 次`, page: 'fitness', grad: 'grad-sky' },
     { icon: '🏀', label: '篮球训练', val: `${weekCount(S.basketball)} 次`, page: 'basketball', grad: 'grad-lake' },
     { icon: '🍱', label: '饮食作息', val: `${dietWeekCount()} 天`, page: 'diet', grad: 'grad-ice' },
     { icon: '🎵', label: '抖音创作', val: `${S.douyin.length} 条`, page: 'douyin', grad: 'grad-fog' },
@@ -565,6 +569,8 @@ if (todoTodayList) {
     if (tg) { const t = S.todayTasks.find(x => x.id === +tg.dataset.todayTg); if (t) { t.done = !t.done; Store.save(); renderTodoToday(); renderGrowth(); renderNineGrid(); renderDaily(); } return; }
   });
 }
+const todoTodayInput = $('#todoTodayInput');
+const todoTodayBtn = $('#todoTodayBtn');
 if (todoTodayInput) {
   todoTodayInput.addEventListener('keydown', e => { if (e.key === 'Enter') todoTodayBtn && todoTodayBtn.click(); });
 }
@@ -2563,8 +2569,31 @@ function setupGithubUI() {
   $('#btnGhClear').onclick = () => { Store.clearGithub(); renderSyncBadge(); toast('已清除 GitHub 同步配置'); close(); };
 }
 
+/* ----------------------- 数据规范化（兼容旧结构 / 云端回灌）----------------------- */
+function normalizeState() {
+  // 饮食作息：补齐新字段
+  if (!S.diet) S.diet = {};
+  if (!S.diet.mealPlan) S.diet.mealPlan = { breakfast: '', lunch: '', dinner: '' };
+  if (!S.diet.waterCups || !S.diet.waterCups.length) S.diet.waterCups = DEFAULT_WATER_CUPS.slice();
+  if (!S.diet.waterGoal || S.diet.waterGoal < 3000) S.diet.waterGoal = 3000; // 健身人士：最低按运动日水平 3000ml
+  if (typeof S.diet.weight === 'undefined') S.diet.weight = '';
+  if (!S.diet.waterLog) S.diet.waterLog = {};
+  if (!S.diet.bedtime) S.diet.bedtime = '23:30';
+  // 健身：旧数组 → 3 天循环对象（保留旧记录为 history）
+  if (Array.isArray(S.fitness)) {
+    S.fitness = { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05', history: S.fitness };
+  }
+  if (!S.fitness) S.fitness = {};
+  // 始终用最新模板刷新循环（按日编辑存于 todayEdit，不会丢失）
+  S.fitness.cycle = FIT_CYCLE.map(d => ({ ...d }));
+  if (!S.fitness.todayEdit) S.fitness.todayEdit = {};
+  if (!S.fitness.custom) S.fitness.custom = {};
+  if (!S.fitness.log) S.fitness.log = {};
+  if (!S.fitness.cycleStart) S.fitness.cycleStart = '2026-08-05';
+}
+
 /* ----------------------- 启动 ----------------------- */
-Store.onChange(() => { S = Store.state; renderAll(); });
+Store.onChange(() => { S = Store.state; normalizeState(); renderAll(); });
 S = defaultState();
 Store.init();
 S = Store.state;
@@ -2573,23 +2602,7 @@ if (S._studyStartTs) { studyTimer = setInterval(renderStudyTimer, 1000); }
 renderStudyTimer();
 // 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
 if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
-// 饮食作息：新字段懒迁移（旧数据缺 mealPlan/waterCups/waterLog/bedtime）
-if (!S.diet.mealPlan) S.diet.mealPlan = { breakfast: '', lunch: '', dinner: '' };
-if (!S.diet.waterCups || !S.diet.waterCups.length) S.diet.waterCups = DEFAULT_WATER_CUPS.slice();
-if (!S.diet.waterGoal || S.diet.waterGoal < 3000) S.diet.waterGoal = 3000; // 健身人士：最低按运动日水平 3000ml
-if (typeof S.diet.weight === 'undefined') S.diet.weight = '';
-if (!S.diet.waterLog) S.diet.waterLog = {};
-if (!S.diet.bedtime) S.diet.bedtime = '23:30';
-// 健身：旧数组结构 → 新 3 天循环对象结构（保留旧记录为 history，不丢数据）
-if (Array.isArray(S.fitness)) {
-  S.fitness = { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05', history: S.fitness };
-}
-// 始终用最新模板刷新循环（按日编辑存于 todayEdit，不会丢失）
-S.fitness.cycle = FIT_CYCLE.map(d => ({ ...d }));
-if (!S.fitness.todayEdit) S.fitness.todayEdit = {};
-if (!S.fitness.custom) S.fitness.custom = {};
-if (!S.fitness.log) S.fitness.log = {};
-if (!S.fitness.cycleStart) S.fitness.cycleStart = '2026-08-05';
+normalizeState();
 switchPage(S.currentPage || 'growth');
 renderAll();
 setupReminder();

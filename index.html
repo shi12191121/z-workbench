@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803q" />
+<link rel="stylesheet" href="styles.css?v=20260803r" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -686,30 +686,86 @@
     <section class="page-section" id="page-diet">
       <div class="page-header"><h1 class="page-title">饮食作息</h1><p class="page-subtitle">好好吃饭，规律作息，身体是革命的本钱</p></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">本周饮食打卡</div><div class="stat-value"><span id="dietWeek">0</span><span class="unit">/7</span></div></div>
-        <div class="stat-card"><div class="stat-label">睡眠目标</div><div class="stat-value"><span id="dietSleep">7.5</span><span class="unit">小时</span></div></div>
+        <div class="stat-card"><div class="stat-label">本周饮食</div><div class="stat-value"><span id="dietWeek">0</span><span class="unit">/7</span></div></div>
+        <div class="stat-card"><div class="stat-label">今日饮水</div><div class="stat-value"><span id="waterDone">0</span><span class="unit">/<span id="waterTotal">8</span>杯</span></div></div>
+        <div class="stat-card"><div class="stat-label">目标睡眠</div><div class="stat-value"><span id="dietSleep">7.5</span><span class="unit">小时</span></div></div>
         <div class="stat-card"><div class="stat-label">今日三餐</div><div class="stat-value"><span id="dietMeals">0</span><span class="unit">/3</span></div></div>
       </div>
+
+      <!-- 🍽 三餐计划（框架留空，用户后填） -->
       <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">🍽 今日三餐打卡</div></div>
-        <div class="meal-row" id="mealRow">
-          <button class="meal-btn" data-meal="b"><span class="mb-emoji">🌅</span><span>早餐</span><span class="mb-state" id="mealB">未打卡</span></button>
-          <button class="meal-btn" data-meal="l"><span class="mb-emoji">☀️</span><span>午餐</span><span class="mb-state" id="mealL">未打卡</span></button>
-          <button class="meal-btn" data-meal="d"><span class="mb-emoji">🌙</span><span>晚餐</span><span class="mb-state" id="mealD">未打卡</span></button>
+        <div class="card-head"><div class="card-title">🍽 三餐计划</div><div class="card-sub">点 ✎ 编辑，吃完打卡</div></div>
+        <div class="meal-plan" id="mealPlan">
+          <div class="meal-plan-item" data-meal="b">
+            <div class="mp-head">
+              <span class="mp-emoji">🌅</span>
+              <span class="mp-name">早餐</span>
+              <div class="mp-actions">
+                <button class="mp-edit" title="编辑">✎</button>
+                <div class="mp-toggle"></div>
+              </div>
+            </div>
+            <div class="mp-body">点右上 ✎ 编辑你想吃的</div>
+          </div>
+          <div class="meal-plan-item" data-meal="l">
+            <div class="mp-head">
+              <span class="mp-emoji">☀️</span>
+              <span class="mp-name">午餐</span>
+              <div class="mp-actions">
+                <button class="mp-edit" title="编辑">✎</button>
+                <div class="mp-toggle"></div>
+              </div>
+            </div>
+            <div class="mp-body">点右上 ✎ 编辑你想吃的</div>
+          </div>
+          <div class="meal-plan-item" data-meal="d">
+            <div class="mp-head">
+              <span class="mp-emoji">🌙</span>
+              <span class="mp-name">晚餐</span>
+              <div class="mp-actions">
+                <button class="mp-edit" title="编辑">✎</button>
+                <div class="mp-toggle"></div>
+              </div>
+            </div>
+            <div class="mp-body">点右上 ✎ 编辑你想吃的</div>
+          </div>
         </div>
       </div>
+
+      <!-- 💧 每日饮水计划 -->
       <div class="card">
-        <div class="card-head"><div class="card-title">⏰ 作息目标</div></div>
-        <div class="add-row">
-          <div class="form-input" style="flex:1;display:flex;align-items:center;gap:8px;">
-            <span style="font-size:13px;color:var(--text-body)">睡眠目标</span>
-            <input type="number" id="sleepGoal" min="4" max="12" step="0.5" style="width:54px;border:none;background:transparent;font-size:16px;font-weight:700;color:var(--text-title);outline:none" value="7.5"/> 小时
+        <div class="card-head"><div class="card-title">💧 每日饮水计划</div><div class="card-sub">目标 <span id="waterGoalDisp">1850</span>ml · 按时段喝，别等渴了才喝</div></div>
+        <div class="water-progress">
+          <div class="water-big"><span id="waterDone">0</span><i>/<span id="waterTotal">8</span></i> 杯</div>
+          <div class="water-bar"><div class="water-fill" id="waterFill" style="width:0%"></div></div>
+          <div class="water-sum">💧 已喝 <span id="waterMl">0</span> ml</div>
+        </div>
+        <div class="water-cups" id="waterCups"></div>
+      </div>
+
+      <!-- 🌙 睡眠作息 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🌙 睡眠作息</div><div class="card-sub">自动算你每天睡多久</div></div>
+        <div class="sleep-row">
+          <div class="sleep-cell">
+            <div class="sl-lbl">睡觉时间</div>
+            <input type="time" id="bedtime" value="23:30"/>
           </div>
-          <div class="form-input" style="flex:1;display:flex;align-items:center;gap:8px;">
-            <span style="font-size:13px;color:var(--text-body)">起床时间</span>
-            <input type="time" id="wakeTime" style="border:none;background:transparent;font-size:15px;font-weight:700;color:var(--text-title);outline:none" value="07:00"/>
+          <div class="sleep-cell">
+            <div class="sl-lbl">起床时间</div>
+            <input type="time" id="wakeTime" value="07:00"/>
           </div>
-          <button class="btn" id="btnSaveDiet">保存</button>
+        </div>
+        <div class="sleep-result" id="sleepResult">
+          <span class="sr-num" id="sleepDur">7.5</span>
+          <span class="sr-unit">小时</span>
+          <span class="sr-tip" id="sleepTip">目标 7.5h · 已达标 ✓</span>
+        </div>
+        <div class="sleep-goal-row">
+          <span class="sg-lbl">目标睡眠</span>
+          <input type="number" id="sleepGoal" min="4" max="12" step="0.5" value="7.5"/>
+          <span>小时</span>
+          <button class="btn sg-btn" id="btnSaveDiet">保存</button>
         </div>
       </div>
     </section>
@@ -888,7 +944,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803q"></script>
-<script src="app.js?v=20260803q"></script>
+<script src="cet6words.js?v=20260803r"></script>
+<script src="app.js?v=20260803r"></script>
 </body>
 </html>

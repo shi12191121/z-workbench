@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803s" />
+<link rel="stylesheet" href="styles.css?v=20260803t" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -415,15 +415,36 @@
 
     <!-- ---------- 健身计划 ---------- -->
     <section class="page-section" id="page-fitness">
-      <div class="page-header"><h1 class="page-title">健身计划</h1><p class="page-subtitle">自律给我自由，每一组都算数</p></div>
+      <div class="page-header"><h1 class="page-title">健身计划</h1><p class="page-subtitle">3 天循环 · 自律给我自由，每一组都算数</p></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">本周训练</div><div class="stat-value"><span id="fitDays">0</span><span class="unit">/5</span></div></div>
+        <div class="stat-card"><div class="stat-label">本周训练</div><div class="stat-value"><span id="fitDays">0</span><span class="unit">天</span></div></div>
         <div class="stat-card"><div class="stat-label">总时长</div><div class="stat-value"><span id="fitMinutes">0</span><span class="unit">分钟</span></div></div>
       </div>
-      <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">训练记录</div></div>
-        <div class="add-row"><input type="text" class="form-input" id="fitContent" placeholder="项目 例：哑铃推胸 4 组" maxlength="60"/><input type="number" class="form-input" id="fitMin" placeholder="分钟" min="1" style="flex:0 0 90px"/><button class="btn" id="btnAddFit">+ 记录</button></div>
-        <div id="fitList"></div>
+
+      <!-- 今日训练内容（高亮 · 跟截图结构） -->
+      <div class="card today-train-card">
+        <div class="card-head">
+          <div class="card-title">今日训练内容</div>
+          <button class="fit-edit" id="btnEditToday" title="编辑今日内容">✎ 编辑</button>
+        </div>
+        <div class="ttc-title" id="todayTrainTitle">—</div>
+        <div class="ttc-rows" id="todayTrainRows"></div>
+      </div>
+
+      <!-- 今日训练打卡 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">今日训练打卡</div></div>
+        <div id="todayCheckList"></div>
+        <div class="add-row">
+          <input type="text" class="form-input" id="fitCustom" placeholder="添加自定义训练任务" maxlength="60" style="flex:2"/>
+          <button class="btn" id="btnAddFitCustom">+ 添加</button>
+        </div>
+      </div>
+
+      <!-- 本周训练完成度 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">本周训练完成度</div></div>
+        <div id="weekTrainList"></div>
       </div>
     </section>
 
@@ -952,7 +973,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803s"></script>
-<script src="app.js?v=20260803s"></script>
+<script src="cet6words.js?v=20260803t"></script>
+<script src="app.js?v=20260803t"></script>
 </body>
 </html>

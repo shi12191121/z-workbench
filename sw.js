@@ -4,7 +4,7 @@
  * 策略：网络优先（network-first）——永远先请求云端最新页面/数据，
  *      断网时才回退到缓存，绝不把旧页面/旧数据锁死在本地。
  * ========================================================= */
-const CACHE = 'z-workbench-v1';
+const CACHE = 'z-workbench-v4';
 const ASSETS = [
   './', './index.html', './manifest.json',
   './styles.css', './app.js', './firebase-config.js', './avatar.jpg'

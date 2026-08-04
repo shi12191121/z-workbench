@@ -38,6 +38,17 @@ function shiftDay(key, n) {  // key 形如 'YYYY-M-D'，返回 +/-n 天的 key
 function inWeek(dateStr) { return dateStr >= weekKeyStr(); }
 
 /* ----------------------- 默认数据 ----------------------- */
+const DEFAULT_WATER_CUPS = [
+  { time: '07:00', ml: 300, note: '空腹温水，唤醒新陈代谢' },
+  { time: '09:00', ml: 250, note: '工作前补充水分' },
+  { time: '10:30', ml: 200, note: '小口慢饮' },
+  { time: '12:30', ml: 200, note: '饭前一杯' },
+  { time: '14:30', ml: 150, note: '下午提神补水' },
+  { time: '16:00', ml: 200, note: '运动前后' },
+  { time: '18:30', ml: 200, note: '晚餐前' },
+  { time: '21:00', ml: 150, note: '睡前一小时止' }
+];
+
 function defaultState() {
   return {
     currentPage: 'growth',
@@ -54,7 +65,7 @@ function defaultState() {
     videos: [], english: [], fitness: [], basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
-    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, sleepGoal: 7.5, wakeTime: '07:00' }, travel: [],
+    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 1850, waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: [],
     courses: [], videos: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
@@ -1890,32 +1901,148 @@ $('#dyStats').addEventListener('click', e => {
 });
 
 /* 饮食作息 */
+// 跨午夜的睡眠时长
+function hmToMin(t) { const [h, m] = (t || '00:00').split(':').map(Number); return h * 60 + m; }
+function sleepHours(bed, wake) {
+  let d = hmToMin(wake) - hmToMin(bed);
+  if (d <= 0) d += 24 * 60;
+  return Math.round((d / 60) * 10) / 10;
+}
+
 function renderDiet() {
   const t = todayKey();
-  const m = S.diet.meals[t] || {};
+  if (!S.diet.meals[t]) S.diet.meals[t] = {};
+  const m = S.diet.meals[t];
   $('#dietMeals').textContent = ['b','l','d'].filter(k => m[k]).length;
   $('#dietSleep').textContent = S.diet.sleepGoal;
   $('#dietWeek').textContent = Object.keys(S.diet.meals).filter(k => k >= weekKeyStr()).length;
-  $('#sleepGoal').value = S.diet.sleepGoal;
-  $('#wakeTime').value = S.diet.wakeTime;
-  $$('#mealRow .meal-btn').forEach(b => {
-    const on = !!m[b.dataset.meal];
-    b.classList.toggle('checked', on);
-    const st = b.querySelector('.mb-state'); if (st) st.textContent = on ? '已打卡' : '未打卡';
+  const plan = S.diet.mealPlan;
+  const mpMap = { b: 'breakfast', l: 'lunch', d: 'dinner' };
+  $$('#mealPlan .meal-plan-item').forEach(item => {
+    const k = item.dataset.meal;
+    const on = !!m[k];
+    item.classList.toggle('checked', on);
+    if (!item.classList.contains('editing')) {
+      const body = item.querySelector('.mp-body');
+      const txt = (plan[mpMap[k]] || '').trim();
+      if (body) {
+        body.textContent = txt || '点右上 ✎ 编辑你想吃的';
+        body.classList.toggle('mp-empty', !txt);
+      }
+    }
   });
+  renderWater();
+  renderSleep();
 }
-$('#mealRow').addEventListener('click', e => {
-  const btn = e.target.closest('.meal-btn'); if (!btn) return;
+
+function renderWater() {
+  const t = todayKey();
+  const cups = S.diet.waterCups;
+  if (!S.diet.waterLog[t]) S.diet.waterLog[t] = new Array(cups.length).fill(0);
+  const log = S.diet.waterLog[t];
+  while (log.length < cups.length) log.push(0);
+  if (log.length > cups.length) log.length = cups.length;
+  const done = log.filter(Boolean).length;
+  const totalMl = log.reduce((s, on, i) => s + (on ? (cups[i]?.ml || 0) : 0), 0);
+  $('#waterDone').textContent = done;
+  $('#waterTotal').textContent = cups.length;
+  $('#waterGoalDisp').textContent = S.diet.waterGoal;
+  $('#waterMl').textContent = totalMl;
+  const pct = cups.length ? Math.min(100, Math.round(done / cups.length * 100)) : 0;
+  const fill = $('#waterFill'); if (fill) fill.style.width = pct + '%';
+  const wrap = $('#waterCups');
+  if (!wrap) return;
+  wrap.innerHTML = cups.map((c, i) => `
+    <div class="water-cup ${log[i] ? 'on' : ''}" data-wi="${i}">
+      <span class="wc-emoji">🥛</span>
+      <div class="wc-main">
+        <div class="wc-top"><span class="wc-time">${escapeHtml(c.time)}</span><span class="wc-ml">${c.ml}ml</span></div>
+        <div class="wc-note">${escapeHtml(c.note || '')}</div>
+      </div>
+      <div class="wc-check"></div>
+    </div>`).join('');
+}
+
+function renderSleep() {
+  $('#bedtime').value = S.diet.bedtime || '23:30';
+  $('#wakeTime').value = S.diet.wakeTime || '07:00';
+  $('#sleepGoal').value = S.diet.sleepGoal || 7.5;
+  updateSleepCalc();
+}
+function updateSleepCalc() {
+  const h = sleepHours($('#bedtime').value, $('#wakeTime').value);
+  const dur = $('#sleepDur'); if (dur) dur.textContent = h;
+  const goal = +$('#sleepGoal').value || 7.5;
+  const ok = h >= goal;
+  const tip = $('#sleepTip'); if (tip) tip.textContent = ok ? `目标 ${goal}h · 已达标 ✓` : `目标 ${goal}h · 还差 ${(goal - h).toFixed(1)}h`;
+  const res = $('#sleepResult'); if (res) res.classList.toggle('ok', ok);
+}
+
+// 三餐：勾选 + 编辑
+$('#mealPlan').addEventListener('click', e => {
+  const item = e.target.closest('.meal-plan-item'); if (!item) return;
+  const k = item.dataset.meal;
+  if (e.target.closest('.mp-edit')) { enterMealEdit(item, k); return; }
+  if (item.classList.contains('editing')) {
+    if (e.target.closest('.mp-save')) { saveMealEdit(item, k); return; }
+    if (e.target.closest('.mp-cancel')) { cancelMealEdit(item); return; }
+    return;
+  }
   const t = todayKey();
   if (!S.diet.meals[t]) S.diet.meals[t] = {};
-  const k = btn.dataset.meal;
   S.diet.meals[t][k] = !S.diet.meals[t][k];
   Store.save(); renderDiet();
 });
+
+function enterMealEdit(item, k) {
+  const mpMap = { b: 'breakfast', l: 'lunch', d: 'dinner' };
+  const cur = (S.diet.mealPlan && S.diet.mealPlan[mpMap[k]]) || '';
+  item.classList.add('editing');
+  const act = item.querySelector('.mp-actions');
+  if (act) act.innerHTML = '<button class="mp-act mp-save" title="保存">✓</button><button class="mp-act mp-cancel" title="取消">✕</button>';
+  const body = item.querySelector('.mp-body');
+  if (body) body.innerHTML = `<textarea class="mp-ta" rows="2" placeholder="例：1杯豆浆 + 1个鸡蛋 + 全麦面包">${escapeHtml(cur)}</textarea>`;
+  const ta = item.querySelector('.mp-ta'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+function saveMealEdit(item, k) {
+  const mpMap = { b: 'breakfast', l: 'lunch', d: 'dinner' };
+  const ta = item.querySelector('.mp-ta');
+  if (!S.diet.mealPlan) S.diet.mealPlan = { breakfast: '', lunch: '', dinner: '' };
+  S.diet.mealPlan[mpMap[k]] = (ta ? ta.value : '').trim();
+  Store.save();
+  item.classList.remove('editing');
+  const act = item.querySelector('.mp-actions');
+  if (act) act.innerHTML = '<button class="mp-edit" title="编辑">✎</button><div class="mp-toggle"></div>';
+  renderDiet();
+}
+function cancelMealEdit(item) {
+  item.classList.remove('editing');
+  renderDiet();
+}
+
+// 饮水打卡
+$('#waterCups').addEventListener('click', e => {
+  const tg = e.target.closest('[data-wi]'); if (!tg) return;
+  const i = +tg.dataset.wi;
+  const t = todayKey();
+  if (!S.diet.waterLog[t]) S.diet.waterLog[t] = new Array(S.diet.waterCups.length).fill(0);
+  while (S.diet.waterLog[t].length < S.diet.waterCups.length) S.diet.waterLog[t].push(0);
+  S.diet.waterLog[t][i] = S.diet.waterLog[t][i] ? 0 : 1;
+  Store.save(); renderWater();
+});
+
+// 睡眠：实时算 + 保存
+['bedtime','wakeTime','sleepGoal'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('input', updateSleepCalc);
+  el.addEventListener('change', updateSleepCalc);
+});
 $('#btnSaveDiet').onclick = () => {
-  S.diet.sleepGoal = +$('#sleepGoal').value || 7.5;
+  S.diet.bedtime = $('#bedtime').value || '23:30';
   S.diet.wakeTime = $('#wakeTime').value || '07:00';
-  Store.save(); renderDiet(); toast('作息目标已保存');
+  S.diet.sleepGoal = +$('#sleepGoal').value || 7.5;
+  Store.save(); renderSleep(); toast('作息已保存');
 };
 
 /* 旅行计划 */
@@ -2270,6 +2397,12 @@ if (S._studyStartTs) { studyTimer = setInterval(renderStudyTimer, 1000); }
 renderStudyTimer();
 // 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
 if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
+// 饮食作息：新字段懒迁移（旧数据缺 mealPlan/waterCups/waterLog/bedtime）
+if (!S.diet.mealPlan) S.diet.mealPlan = { breakfast: '', lunch: '', dinner: '' };
+if (!S.diet.waterCups || !S.diet.waterCups.length) S.diet.waterCups = DEFAULT_WATER_CUPS.slice();
+if (!S.diet.waterGoal) S.diet.waterGoal = 1850;
+if (!S.diet.waterLog) S.diet.waterLog = {};
+if (!S.diet.bedtime) S.diet.bedtime = '23:30';
 switchPage(S.currentPage || 'growth');
 renderAll();
 setupReminder();

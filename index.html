@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803r" />
+<link rel="stylesheet" href="styles.css?v=20260803s" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -687,7 +687,7 @@
       <div class="page-header"><h1 class="page-title">饮食作息</h1><p class="page-subtitle">好好吃饭，规律作息，身体是革命的本钱</p></div>
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">本周饮食</div><div class="stat-value"><span id="dietWeek">0</span><span class="unit">/7</span></div></div>
-        <div class="stat-card"><div class="stat-label">今日饮水</div><div class="stat-value"><span id="waterDone">0</span><span class="unit">/<span id="waterTotal">8</span>杯</span></div></div>
+        <div class="stat-card"><div class="stat-label">今日饮水</div><div class="stat-value"><span id="waterDone">0</span><span class="unit">/<span id="waterTotal">10</span>杯</span></div></div>
         <div class="stat-card"><div class="stat-label">目标睡眠</div><div class="stat-value"><span id="dietSleep">7.5</span><span class="unit">小时</span></div></div>
         <div class="stat-card"><div class="stat-label">今日三餐</div><div class="stat-value"><span id="dietMeals">0</span><span class="unit">/3</span></div></div>
       </div>
@@ -734,9 +734,17 @@
 
       <!-- 💧 每日饮水计划 -->
       <div class="card">
-        <div class="card-head"><div class="card-title">💧 每日饮水计划</div><div class="card-sub">目标 <span id="waterGoalDisp">1850</span>ml · 按时段喝，别等渴了才喝</div></div>
+        <div class="card-head"><div class="card-title">💧 每日饮水计划</div><div class="card-sub">🏋️ 健身补水 · 目标 <span id="waterGoalDisp">3000</span>ml（运动日 40ml/kg）</div></div>
+        <div class="water-fitness">
+          <div class="wf-row">
+            <span class="wf-label">我的体重</span>
+            <input type="number" id="fitWeight" class="wf-input" placeholder="kg" min="30" max="150" inputmode="numeric" /> <span class="wf-unit">kg</span>
+            <button class="wf-btn" id="fitWeightApply">算目标</button>
+          </div>
+          <div class="wf-tip" id="fitWaterTip"></div>
+        </div>
         <div class="water-progress">
-          <div class="water-big"><span id="waterDone">0</span><i>/<span id="waterTotal">8</span></i> 杯</div>
+          <div class="water-big"><span id="waterDone">0</span><i>/<span id="waterTotal">10</span></i> 杯</div>
           <div class="water-bar"><div class="water-fill" id="waterFill" style="width:0%"></div></div>
           <div class="water-sum">💧 已喝 <span id="waterMl">0</span> ml</div>
         </div>
@@ -944,7 +952,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803r"></script>
-<script src="app.js?v=20260803r"></script>
+<script src="cet6words.js?v=20260803s"></script>
+<script src="app.js?v=20260803s"></script>
 </body>
 </html>

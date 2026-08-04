@@ -38,15 +38,18 @@ function shiftDay(key, n) {  // key 形如 'YYYY-M-D'，返回 +/-n 天的 key
 function inWeek(dateStr) { return dateStr >= weekKeyStr(); }
 
 /* ----------------------- 默认数据 ----------------------- */
+// 健身版饮水：10 杯合计 3000ml（运动日水平），含训练前/后集中补水
 const DEFAULT_WATER_CUPS = [
-  { time: '07:00', ml: 300, note: '空腹温水，唤醒新陈代谢' },
-  { time: '09:00', ml: 250, note: '工作前补充水分' },
-  { time: '10:30', ml: 200, note: '小口慢饮' },
-  { time: '12:30', ml: 200, note: '饭前一杯' },
-  { time: '14:30', ml: 150, note: '下午提神补水' },
-  { time: '16:00', ml: 200, note: '运动前后' },
-  { time: '18:30', ml: 200, note: '晚餐前' },
-  { time: '21:00', ml: 150, note: '睡前一小时止' }
+  { time: '07:00', ml: 350, note: '晨起空腹温水，唤醒代谢（健身日从第一杯开始补）' },
+  { time: '09:00', ml: 300, note: '上午补水，保持细胞水合' },
+  { time: '10:30', ml: 250, note: '课间小口慢饮，别等口渴' },
+  { time: '11:30', ml: 400, note: '🏋️ 训练前 1.5h 分次喝，避免训练时胃部不适' },
+  { time: '12:30', ml: 250, note: '午饭前一杯' },
+  { time: '15:00', ml: 500, note: '🏋️ 训练后集中补，按体重流失回补电解质' },
+  { time: '16:30', ml: 250, note: '下午继续补水' },
+  { time: '18:30', ml: 250, note: '晚餐前一杯' },
+  { time: '20:00', ml: 250, note: '晚间补水' },
+  { time: '21:00', ml: 200, note: '睡前一小时止，别再喝' }
 ];
 
 function defaultState() {
@@ -65,7 +68,7 @@ function defaultState() {
     videos: [], english: [], fitness: [], basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
-    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 1850, waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: [],
+    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: [],
     courses: [], videos: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
@@ -1944,12 +1947,26 @@ function renderWater() {
   if (log.length > cups.length) log.length = cups.length;
   const done = log.filter(Boolean).length;
   const totalMl = log.reduce((s, on, i) => s + (on ? (cups[i]?.ml || 0) : 0), 0);
-  $('#waterDone').textContent = done;
-  $('#waterTotal').textContent = cups.length;
+  // 重复 id 两处都更新（顶部统计 + 卡片内大数字）
+  $$('#waterDone').forEach(el => el.textContent = done);
+  $$('#waterTotal').forEach(el => el.textContent = cups.length);
   $('#waterGoalDisp').textContent = S.diet.waterGoal;
   $('#waterMl').textContent = totalMl;
   const pct = cups.length ? Math.min(100, Math.round(done / cups.length * 100)) : 0;
   const fill = $('#waterFill'); if (fill) fill.style.width = pct + '%';
+  // 健身体重自适应模块
+  const wEl = $('#fitWeight'); if (wEl && document.activeElement !== wEl) wEl.value = S.diet.weight || '';
+  const tip = $('#fitWaterTip');
+  if (tip) {
+    const w = +S.diet.weight;
+    if (w >= 30) {
+      const train = Math.round(w * 40 / 50) * 50;
+      const rest = Math.round(w * 30 / 50) * 50;
+      tip.innerHTML = `按国际运动医学联合会标准：<b>运动日 ${train}ml</b>（40ml/kg）· <b>休息日 ${rest}ml</b>（30ml/kg）。已按训练日设为今日目标。`;
+    } else {
+      tip.textContent = '没填体重时按默认 3000ml（≈75kg 运动日）。填了按「40ml/kg 运动日、30ml/kg 休息日」自动算。';
+    }
+  }
   const wrap = $('#waterCups');
   if (!wrap) return;
   wrap.innerHTML = cups.map((c, i) => `
@@ -2029,6 +2046,16 @@ $('#waterCups').addEventListener('click', e => {
   while (S.diet.waterLog[t].length < S.diet.waterCups.length) S.diet.waterLog[t].push(0);
   S.diet.waterLog[t][i] = S.diet.waterLog[t][i] ? 0 : 1;
   Store.save(); renderWater();
+});
+
+// 健身：按体重算饮水目标（国际运动医学联合会：运动日 40ml/kg，休息日 30ml/kg）
+$('#fitWeightApply').addEventListener('click', () => {
+  const w = +$('#fitWeight').value;
+  if (!w || w < 30 || w > 150) return toast('请输入 30–150 之间的体重(kg)');
+  S.diet.weight = w;
+  const train = Math.round(w * 40 / 50) * 50;
+  S.diet.waterGoal = train; // 健身人士默认按训练日目标
+  Store.save(); renderWater(); toast(`已按体重设为运动日目标 ${train}ml`);
 });
 
 // 睡眠：实时算 + 保存
@@ -2400,7 +2427,8 @@ if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
 // 饮食作息：新字段懒迁移（旧数据缺 mealPlan/waterCups/waterLog/bedtime）
 if (!S.diet.mealPlan) S.diet.mealPlan = { breakfast: '', lunch: '', dinner: '' };
 if (!S.diet.waterCups || !S.diet.waterCups.length) S.diet.waterCups = DEFAULT_WATER_CUPS.slice();
-if (!S.diet.waterGoal) S.diet.waterGoal = 1850;
+if (!S.diet.waterGoal || S.diet.waterGoal < 3000) S.diet.waterGoal = 3000; // 健身人士：最低按运动日水平 3000ml
+if (typeof S.diet.weight === 'undefined') S.diet.weight = '';
 if (!S.diet.waterLog) S.diet.waterLog = {};
 if (!S.diet.bedtime) S.diet.bedtime = '23:30';
 switchPage(S.currentPage || 'growth');

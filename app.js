@@ -93,7 +93,7 @@ function defaultState() {
     videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05' }, basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
-    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: [],
+    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: { activeTripId: null, trips: {} },
     courses: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
@@ -423,7 +423,7 @@ function renderNineGrid() {
     { icon: '🍱', label: '饮食作息', val: `${dietWeekCount()} 天`, page: 'diet', grad: 'grad-ice' },
     { icon: '🎵', label: '抖音创作', val: `${S.douyin.length} 条`, page: 'douyin', grad: 'grad-fog' },
     { icon: '📑', label: 'WPS学习', val: `${S.wps.length} 项`, page: 'wps', grad: 'grad-sky' },
-    { icon: '✈️', label: '旅行计划', val: `${S.travel.length} 个`, page: 'travel', grad: 'grad-lake' },
+    { icon: '✈️', label: '旅行计划', val: (S.travel && S.travel.trips && Object.keys(S.travel.trips).length) ? '已规划' : '想出发', page: 'travel', grad: 'grad-lake' },
     { icon: '📝', label: '每日复盘', val: `${weekCount(S.reviews)} 天`, page: 'review', grad: 'grad-fog' },
     { icon: '💰', label: '存钱计划', val: `¥${fmt(monthSave())}`, page: 'savings', grad: 'grad-sky' },
     { icon: '🧾', label: '每日账单', val: `¥${fmt(monthBillExpense())}`, page: 'bill', grad: 'grad-lake' }
@@ -2222,27 +2222,282 @@ $('#btnSaveDiet').onclick = () => {
 };
 
 /* 旅行计划 */
-function renderTravel() {
-  $('#tvWant').textContent = S.travel.filter(x => !x.done).length;
-  $('#tvDone').textContent = S.travel.filter(x => x.done).length;
-  $('#tvTotal').textContent = S.travel.length;
-  renderList(S.travel, '#tvList', v => `
-    <div class="list-item">
-      <div class="task-checkbox ${v.done ? 'checked' : ''}" data-tv="${v.id}"></div>
-      <div class="li-main"><div class="li-title" style="${v.done?'text-decoration:line-through;color:#718096':''}">${escapeHtml(v.name)}</div><div class="li-sub">📅 ${v.date || '未定'} · ${v.done ? '已出发' : '计划中'}</div></div>
-      <button class="icon-btn" data-tdv="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>
-    </div>`, '还没有目的地，去添加第一个远方吧～');
-}
-$('#btnAddTv').onclick = () => {
-  const name = $('#tvName').value.trim(), date = $('#tvDate').value.trim();
-  if (!name) return toast('请输入目的地');
-  S.travel.push({ id: uid(), name, date, done: false });
-  Store.save(); $('#tvName').value = ''; $('#tvDate').value = ''; renderTravel(); renderNineGrid(); toast('已添加');
+const TV_DAY_MS = 86400000;
+const DEFAULT_CHECKLIST = {
+  '证件 & 财务': ['身份证 / 护照', '机票 / 高铁票（电子票截图）', '银行卡 / 少量现金', '学生证（景点半价）', '驾照（租车用）'],
+  '护肤 & 美妆': ['防晒霜（海边必备 SPF50+）', '补水面膜 / 晒后修复', '帽子 / 墨镜', '口红 / 气垫', '卸妆 & 基础护肤品', '小镜子'],
+  '衣物 & 配饰': ['浅色长裙 ×2', '防晒衣 / 薄外套', '泳衣（如需下海）', '舒适运动鞋', '睡衣 / 内衣袜子'],
+  '电子 & 杂物': ['手机充电器 / 充电宝', '自拍杆 / 三脚架', '耳机', '水杯', '雨伞 / 雨衣'],
+  '药品 & 应急': ['感冒药 / 肠胃药', '创可贴 / 碘伏', '驱蚊液', '消毒湿巾', '口罩']
 };
-$('#tvList').addEventListener('click', e => {
-  const tg = e.target.closest('[data-tv]'); if (tg) { const v = S.travel.find(x => x.id === +tg.dataset.tv); if (v) { v.done = !v.done; Store.save(); renderTravel(); } return; }
-  const dl = e.target.closest('[data-tdv]'); if (dl) { S.travel = S.travel.filter(x => x.id !== +dl.dataset.tdv); Store.save(); renderTravel(); renderNineGrid(); toast('已删除'); }
-});
+const DEFAULT_BUDGET_ITEMS = ['往来大交通', '住宿', '船票 / 景区交通', '景点门票', '每日餐饮', '市内交通 / 打车', '购物 / 其他'];
+function tvActiveTrip() { return S.travel.activeTripId ? S.travel.trips[S.travel.activeTripId] : null; }
+function tvTripDates(t) { if (!t || !t.startDate || !t.endDate) return []; const s = new Date(t.startDate), e = new Date(t.endDate); const out = []; for (let d = new Date(s); d <= e; d.setDate(d.getDate()+1)) out.push(new Date(d).toISOString().slice(0,10)); return out; }
+function tvFmtDate(ds) { const d = new Date(ds); return { m: d.getMonth()+1, d: d.getDate(), wk: ['日','一','二','三','四','五','六'][d.getDay()] }; }
+function tvDiffDays(s, e) { return Math.round((new Date(e) - new Date(s)) / TV_DAY_MS) + 1; }
+function tvTripNights(t) { return t && t.startDate && t.endDate ? Math.max(0, tvDiffDays(t.startDate, t.endDate) - 1) : 0; }
+function tvTripSpent(t) { if (!t || !t.expenses) return 0; let s = 0; Object.values(t.expenses).forEach(a => a.forEach(x => s += +x.amount || 0)); return s; }
+function tvFoodCount(t) { if (!t || !t.foods) return 0; return Object.values(t.foods).reduce((s, a) => s + a.length, 0); }
+
+function renderTravel() {
+  const trip = tvActiveTrip();
+  const chip = $('#tvTripChip');
+  if (trip) { chip.textContent = '🧳 ' + trip.title + ' · ' + trip.startDate + ' ~ ' + trip.endDate; chip.classList.add('has-trip'); }
+  else { chip.textContent = '+ 新建行程'; chip.classList.remove('has-trip'); }
+  $('#tvDays').textContent = trip ? tvDiffDays(trip.startDate, trip.endDate) : 0;
+  $('#tvDateRange').textContent = trip ? (tvFmtDate(trip.startDate).m+'/'+tvFmtDate(trip.startDate).d+' ~ '+tvFmtDate(trip.endDate).m+'/'+tvFmtDate(trip.endDate).d) : '点上方新建行程';
+  $('#tvSpent').textContent = '¥' + (trip ? tvTripSpent(trip) : 0);
+  $('#tvNights').textContent = trip ? tvTripNights(trip) : 0;
+  $('#tvFoods').textContent = trip ? tvFoodCount(trip) : 0;
+  const dates = trip ? tvTripDates(trip) : [];
+  let dh = '';
+  if (dates.length) {
+    dates.forEach((ds, i) => {
+      const f = tvFmtDate(ds);
+      const active = (trip.currentDate === ds) || (!trip.currentDate && i === 0) ? ' active' : '';
+      dh += `<div class="tv-day-card${active}" data-date="${ds}"><div class="dnum">Day${i+1}</div><div class="ddate">${String(f.m).padStart(2,'0')}-${String(f.d).padStart(2,'0')}</div><div class="dwk">周${f.wk}</div></div>`;
+    });
+  } else {
+    dh = '<div class="tv-empty" style="margin:0 auto"><div class="te-emoji">📅</div>点上方"+ 新建行程"开始第一次出发</div>';
+  }
+  dh += '<div class="tv-day-add" id="tvAddDay">＋</div>';
+  $('#tvDays').innerHTML = dh;
+  const detail = $('#tvDetail');
+  if (!trip || !dates.length) { detail.innerHTML = ''; }
+  else {
+    const cur = trip.currentDate || dates[0]; trip.currentDate = cur;
+    const f = tvFmtDate(cur);
+    const itin = (trip.itinerary && trip.itinerary[cur]) || [];
+    const stays = (trip.stays && trip.stays[cur]) || [];
+    const foods = (trip.foods && trip.foods[cur]) || [];
+    const exps = (trip.expenses && trip.expenses[cur]) || [];
+    const note = (trip.notes && trip.notes[cur]) || '';
+    const dayTot = exps.reduce((s,x)=>s+(+x.amount||0), 0);
+    const idx = dates.indexOf(cur);
+    detail.innerHTML = `<div class="tv-day-hero"><div class="dh-date"><div class="dh-d">${f.d}</div><div class="dh-m">${f.m}月</div></div><div class="dh-info"><div class="dh-title">Day${idx+1} · ${escapeHtml(trip.title)}</div><div class="dh-sub">📍 ${escapeHtml(trip.title)} · 周${f.wk}</div></div><div class="dh-actions"><button class="icon-btn" id="tvEditDay" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button><button class="icon-btn" id="tvDelDay" title="删除当天"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div></div><div class="card tv-subcard"><div class="card-head"><div class="card-title">📍 当日行程</div><button class="btn btn-sm" data-add="itin">+ 添加</button></div>${itin.length ? itin.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-time">${escapeHtml(x.time||'')}</span><span class="ti-title">${escapeHtml(x.title||'')}</span></div>${(x.place||x.tag)?`<div class="ti-sub">${x.place?'📍 '+escapeHtml(x.place):''}${x.tag?' · '+escapeHtml(x.tag):''}</div>`:''}</div><button class="ti-del" data-del-itin="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🗺</div>暂无行程，点 + 添加</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">🏨 住宿地</div><button class="btn btn-sm" data-add="stay">+ 添加</button></div>${stays.length ? stays.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.name||'')}</span>${x.price?`<span class="ti-price">¥${x.price}</span>`:''}</div><div class="ti-sub">${x.time?'🕐 '+escapeHtml(x.time):''}${x.addr?' · 📍 '+escapeHtml(x.addr):''}</div></div><button class="ti-del" data-del-stay="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🏨</div>暂无住宿，点 + 添加</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">🍜 美食打卡</div><button class="btn btn-sm" data-add="food">+ 添加</button></div>${foods.length ? foods.map(x => `<div class="tv-item${x.checked?' checked':''}"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.name||'')}</span>${x.price?`<span class="ti-price">¥${x.price}</span>`:''}</div>${x.addr?'<div class="ti-sub">📍 '+escapeHtml(x.addr)+'</div>':''}</div><button class="ti-del" data-del-food="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🍜</div>暂无美食记录</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">💰 当日花费</div><button class="btn btn-sm" data-add="exp">+ 记账</button></div>${exps.length ? exps.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.cat||'')}</span><span class="ti-price">¥${x.amount||0}</span></div><div class="ti-sub">${x.pay?'· '+escapeHtml(x.pay):''}${x.note?' · '+escapeHtml(x.note):''}</div></div><button class="ti-del" data-del-exp="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">💰</div>暂无花费记录</div>'}${exps.length?`<div class="tv-tot"><span>当日合计</span><b>¥${dayTot}</b></div>`:''}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">📝 当日旅行小记</div></div><textarea class="tv-note-area" id="tvNote" placeholder="记录下今天的见闻感受吧">${escapeHtml(note)}</textarea></div>`;
+  }
+  // 攻略
+  const guideEl = $('#tvGuide'), guideTip = $('#tvGuideTip');
+  if (trip && trip.guidePending) { guideTip.hidden = false; guideTip.innerHTML = `📍 待生成：<b>${escapeHtml(trip.guidePending.dest)}</b> · ${trip.guidePending.days}天 · 告诉 AI 后帮你搜小红书/抖音攻略生成`; }
+  else { guideTip.hidden = true; guideTip.innerHTML = ''; }
+  const guide = trip ? trip.guide : null;
+  if (trip && guide && Object.keys(guide).length) {
+    let gh = '';
+    Object.keys(guide).sort().forEach(k => {
+      const items = guide[k] || []; if (!items.length) return;
+      gh += `<div class="tv-guide-day"><div class="tv-guide-day-head"><div class="gdh-num">${k.replace('day','')}</div><div class="gdh-title">${escapeHtml(items[0].theme||'')}</div></div>`;
+      items.forEach(x => {
+        gh += `<div class="tv-guide-spot"><div class="gs-top"><span class="gs-time">${escapeHtml(x.time||'')}</span><span class="gs-name">${escapeHtml(x.name||'')}</span></div><div class="gs-tip">${escapeHtml(x.tip||'')}</div>${x.dress?`<div class="gs-dress">👗 ${escapeHtml(x.dress)}</div>`:''}<div class="tv-jump"><a class="jxhs" href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">小红书</a><a class="jdouyin" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">抖音</a></div></div>`;
+      });
+      gh += '</div>';
+    });
+    guideEl.innerHTML = gh;
+  } else if (!trip || !trip.guidePending) {
+    guideEl.innerHTML = '<div class="tv-empty"><div class="te-emoji">🗺</div>点 + 生成攻略，告诉 AI 目的地和天数，AI 帮你搜小红书/抖音攻略生成</div>';
+  } else { guideEl.innerHTML = ''; }
+  // 拍照姿势
+  const posesEl = $('#tvPoses'), posesTip = $('#tvPosesTip');
+  if (trip && trip.posesPending) { posesTip.hidden = false; posesTip.innerHTML = `📍 待生成：<b>${escapeHtml(trip.posesPending.dest)}</b> · 告诉 AI 后生成`; }
+  else { posesTip.hidden = true; posesTip.innerHTML = ''; }
+  const poses = trip ? trip.poses : null;
+  if (trip && poses && Object.keys(poses).length) {
+    let ph = '';
+    Object.keys(poses).forEach(spot => {
+      ph += `<div class="tv-pose-group"><div class="tv-pose-group-head">📍 ${escapeHtml(spot)}</div>`;
+      (poses[spot]||[]).forEach(x => {
+        ph += `<div class="tv-pose"><div class="tp-head"><span class="tp-emoji">📷</span><span class="tp-pose">${escapeHtml(x.pose||'')}</span></div><div class="tp-tip">${escapeHtml(x.tip||'')}</div><div class="tv-jump"><a class="jxhs" href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(spot+' 拍照')}" target="_blank" rel="noopener">小红书</a><a class="jdouyin" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(spot+' 拍照')}" target="_blank" rel="noopener">抖音</a></div></div>`;
+      });
+      ph += '</div>';
+    });
+    posesEl.innerHTML = ph;
+  } else if (!trip || !trip.posesPending) {
+    posesEl.innerHTML = '<div class="tv-empty"><div class="te-emoji">📸</div>点 + 生成姿势，告诉 AI 景点，AI 帮你搜同款姿势</div>';
+  } else { posesEl.innerHTML = ''; }
+  // 物品清单
+  const cl = trip ? trip.checklist : null;
+  if (trip && cl && Object.keys(cl).length) {
+    let ch = '';
+    Object.keys(cl).forEach(cat => {
+      ch += `<div class="tv-check-cat"><div class="tv-check-cat-head">${escapeHtml(cat)}</div>`;
+      (cl[cat]||[]).forEach((x, i) => {
+        ch += `<label class="tv-check-item${x.checked?' checked':''}"><input type="checkbox" data-cl="${cat}|${i}" ${x.checked?'checked':''}/><span class="tv-ci-name">${escapeHtml(x.name)}</span><button class="tv-ci-del" data-del-cl="${cat}|${i}">×</button></label>`;
+      });
+      ch += '</div>';
+    });
+    $('#tvChecklist').innerHTML = ch;
+  } else {
+    $('#tvChecklist').innerHTML = '<div class="tv-empty"><div class="te-emoji">🎒</div>点 + 生成清单，立即生成通用物品清单（不依赖目的地）</div>';
+  }
+  // 费用清单
+  const bd = trip ? trip.budget : null;
+  if (trip && bd && Object.keys(bd).length) {
+    let bh = ''; let totP=0, totA=0;
+    Object.keys(bd).forEach(k => {
+      const v = bd[k] || {planned:0,actual:0};
+      totP += +v.planned||0; totA += +v.actual||0;
+      bh += `<div class="tv-bud-row"><div class="tb-name">${escapeHtml(k)}</div><input class="tb-input" type="number" min="0" inputmode="numeric" data-bp="${k}" value="${v.planned||''}" placeholder="预算"/><span class="tb-sep">→</span><input class="tb-input tb-actual" type="number" min="0" inputmode="numeric" data-ba="${k}" value="${v.actual||''}" placeholder="实际"/></div>`;
+    });
+    bh += `<div class="tv-bud-tot"><span>预算 ¥${totP} → 实际</span><b>¥${totA}</b></div>`;
+    $('#tvBudget').innerHTML = bh;
+  } else {
+    $('#tvBudget').innerHTML = '<div class="tv-empty"><div class="te-emoji">💰</div>点 + 生成预算，按行程天数生成预算骨架</div>';
+  }
+}
+
+let _tvAddCtx = null;
+function openTvAddModal(kind, trip) {
+  const cur = trip.currentDate;
+  let title='', fields='';
+  if (kind==='itin') { title='📍 添加当日行程'; fields = `<input class="form-input" id="tvfTime" placeholder="时间 例：16:29" maxlength="10"/><input class="form-input" id="tvfTitle" placeholder="行程标题" maxlength="40" style="margin-top:8px"/><input class="form-input" id="tvfPlace" placeholder="地点（选填）" maxlength="40" style="margin-top:8px"/><input class="form-input" id="tvfTag" placeholder="标签（选填）" maxlength="40" style="margin-top:8px"/>`; }
+  else if (kind==='stay') { title='🏨 添加住宿'; fields = `<input class="form-input" id="tvfName" placeholder="住宿名称" maxlength="50"/><input class="form-input" id="tvfAddr" placeholder="地址" maxlength="60" style="margin-top:8px"/><div class="add-row" style="margin-top:8px"><input class="form-input" id="tvfTime" placeholder="入住时间" maxlength="10"/><input class="form-input" id="tvfPrice" type="number" min="0" inputmode="numeric" placeholder="价格 ¥"/></div>`; }
+  else if (kind==='food') { title='🍜 添加美食打卡'; fields = `<input class="form-input" id="tvfName" placeholder="店名 / 菜名" maxlength="50"/><input class="form-input" id="tvfAddr" placeholder="地址（选填）" maxlength="60" style="margin-top:8px"/><input class="form-input" id="tvfPrice" type="number" min="0" inputmode="numeric" placeholder="人均 ¥（选填）" style="margin-top:8px"/>`; }
+  else if (kind==='exp') { title='💰 记账'; fields = `<select class="form-input" id="tvfCat"><option>交通</option><option>住宿</option><option>餐饮</option><option>门票</option><option>购物</option><option>娱乐</option><option>其他</option></select><div class="add-row" style="margin-top:8px"><input class="form-input" id="tvfAmount" type="number" min="0" inputmode="numeric" placeholder="金额 ¥"/><input class="form-input" id="tvfPay" placeholder="支付方式（选填）" maxlength="20"/></div><input class="form-input" id="tvfNote" placeholder="备注（选填）" maxlength="60" style="margin-top:8px"/>`; }
+  $('#tvAddTitle').textContent = title;
+  $('#tvAddFields').innerHTML = fields;
+  _tvAddCtx = { kind, tripId: trip.id, cur };
+  $('#tvAddItemModal').classList.add('show');
+}
+let _tvGenKind = null;
+function openTvGenModal(kind) {
+  const trip = tvActiveTrip(); if (!trip) return toast('先新建行程');
+  _tvGenKind = kind;
+  $('#tvGenTitle').textContent = kind==='guide' ? '🗺 生成旅行攻略' : '📸 生成拍照姿势';
+  const pend = kind==='guide' ? trip.guidePending : trip.posesPending;
+  $('#tvGenDest').value = pend ? pend.dest : '';
+  $('#tvGenDays').value = pend ? pend.days : '';
+  $('#tvGenModal').classList.add('show');
+}
+
+function setupTravel() {
+  $('#tvTripChip').onclick = () => {
+    const trip = tvActiveTrip();
+    const m = $('#tvTripModal'); if (!m) return;
+    $('#tvTripTitle').value = trip ? trip.title : '';
+    $('#tvTripStart').value = trip ? trip.startDate : '';
+    $('#tvTripEnd').value = trip ? trip.endDate : '';
+    m.dataset.editId = trip ? trip.id : '';
+    m.classList.add('show');
+  };
+  $('#tvTripCancel').onclick = () => $('#tvTripModal').classList.remove('show');
+  $('#tvTripSave').onclick = () => {
+    const m = $('#tvTripModal');
+    const title = $('#tvTripTitle').value.trim(), start = $('#tvTripStart').value, end = $('#tvTripEnd').value;
+    if (!title) return toast('请输入行程名称');
+    if (!start || !end) return toast('请选起止日期');
+    if (new Date(end) < new Date(start)) return toast('结束日期不能早于开始');
+    const editId = m.dataset.editId;
+    if (editId && S.travel.trips[editId]) {
+      S.travel.trips[editId].title = title; S.travel.trips[editId].startDate = start; S.travel.trips[editId].endDate = end;
+    } else {
+      const id = uid();
+      S.travel.trips[id] = { id, title, startDate:start, endDate:end, currentDate:start, itinerary:{}, stays:{}, foods:{}, expenses:{}, notes:{}, checklist:{}, budget:{}, guide:{}, guidePending:null, poses:{}, posesPending:null };
+      S.travel.activeTripId = id;
+    }
+    Store.save(); m.classList.remove('show'); renderTravel(); renderNineGrid(); toast('已保存');
+  };
+  $('#tvExport').onclick = () => { try { const blob = new Blob([JSON.stringify(S.travel,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='z-travel-'+Date.now()+'.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); toast('已导出'); } catch(e){ toast('导出失败'); } };
+  $('#tvImport').onclick = () => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.onchange = () => { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const obj = JSON.parse(r.result); if (obj && typeof obj === 'object') { S.travel = obj; normalizeState(); Store.save(); renderTravel(); renderNineGrid(); toast('已导入'); } else toast('文件格式不对'); } catch(e){ toast('导入失败'); } }; r.readAsText(f); }; inp.click(); };
+  $('#tvClear').onclick = () => { if (!confirm('清空所有旅行数据？')) return; S.travel = { activeTripId:null, trips:{} }; Store.save(); renderTravel(); renderNineGrid(); toast('已清空'); };
+  $('#tvManageDates').onclick = () => $('#tvTripChip').click();
+  $('#tvDays').addEventListener('click', e => {
+    const c = e.target.closest('.tv-day-card');
+    if (c) { const trip = tvActiveTrip(); if (trip) { trip.currentDate = c.dataset.date; Store.save(); renderTravel(); } return; }
+    if (e.target.closest('#tvAddDay')) $('#tvTripChip').click();
+  });
+  $('#tvDetail').addEventListener('click', e => {
+    const trip = tvActiveTrip(); if (!trip) return;
+    if (e.target.closest('#tvEditDay')) { $('#tvTripChip').click(); return; }
+    if (e.target.closest('#tvDelDay')) {
+      const cur = trip.currentDate; const dates = tvTripDates(trip);
+      if (!confirm('删除 '+cur+' 当天所有内容？')) return;
+      delete trip.itinerary[cur]; delete trip.stays[cur]; delete trip.foods[cur]; delete trip.expenses[cur]; delete trip.notes[cur];
+      const ni = dates.indexOf(cur); const next = dates[ni+1] || dates[ni-1];
+      if (next) trip.currentDate = next; else { const last = dates[ni-1]; if (last) trip.endDate = last; trip.currentDate = trip.startDate; }
+      Store.save(); renderTravel(); toast('已删除当天'); return;
+    }
+    const ab = e.target.closest('[data-add]'); if (ab) { openTvAddModal(ab.dataset.add, trip); return; }
+    const di = e.target.closest('[data-del-itin]'); if (di) { trip.itinerary[trip.currentDate] = (trip.itinerary[trip.currentDate]||[]).filter(x => x.id !== di.dataset.delItin); Store.save(); renderTravel(); return; }
+    const ds = e.target.closest('[data-del-stay]'); if (ds) { trip.stays[trip.currentDate] = (trip.stays[trip.currentDate]||[]).filter(x => x.id !== ds.dataset.delStay); Store.save(); renderTravel(); return; }
+    const df = e.target.closest('[data-del-food]'); if (df) { trip.foods[trip.currentDate] = (trip.foods[trip.currentDate]||[]).filter(x => x.id !== df.dataset.delFood); Store.save(); renderTravel(); return; }
+    const de = e.target.closest('[data-del-exp]'); if (de) { trip.expenses[trip.currentDate] = (trip.expenses[trip.currentDate]||[]).filter(x => x.id !== de.dataset.delExp); Store.save(); renderTravel(); return; }
+  });
+  $('#tvDetail').addEventListener('input', e => { if (e.target.id !== 'tvNote') return; const trip = tvActiveTrip(); if (!trip) return; trip.notes[trip.currentDate] = e.target.value; Store.save(); });
+  $('#tvChecklist').addEventListener('click', e => {
+    const trip = tvActiveTrip(); if (!trip) return;
+    const d = e.target.closest('[data-del-cl]'); if (d) { const [cat,i] = d.dataset.delCl.split('|'); trip.checklist[cat].splice(+i,1); if (!trip.checklist[cat].length) delete trip.checklist[cat]; Store.save(); renderTravel(); }
+  });
+  $('#tvChecklist').addEventListener('change', e => {
+    const t = e.target; if (t.tagName !== 'INPUT' || !t.dataset.cl) return;
+    const trip = tvActiveTrip(); if (!trip) return;
+    const [cat,i] = t.dataset.cl.split('|');
+    if (trip.checklist[cat] && trip.checklist[cat][+i]) { trip.checklist[cat][+i].checked = t.checked; Store.save(); renderTravel(); }
+  });
+  $('#tvBudget').addEventListener('input', e => {
+    const t = e.target; if (!t.dataset || (!t.dataset.bp && !t.dataset.ba)) return;
+    const trip = tvActiveTrip(); if (!trip) return;
+    const k = t.dataset.bp || t.dataset.ba;
+    if (!trip.budget[k]) trip.budget[k] = {planned:0,actual:0};
+    if (t.dataset.bp) trip.budget[k].planned = +t.value || 0; else trip.budget[k].actual = +t.value || 0;
+    let totP=0,totA=0; Object.values(trip.budget).forEach(v => { totP+=+v.planned||0; totA+=+v.actual||0; });
+    const totEl = $('#tvBudget').querySelector('.tv-bud-tot');
+    if (totEl) totEl.innerHTML = `<span>预算 ¥${totP} → 实际</span><b>¥${totA}</b>`;
+    Store.save();
+  });
+  $('#tvGenGuide').onclick = () => openTvGenModal('guide');
+  $('#tvGenPoses').onclick = () => openTvGenModal('poses');
+  $('#tvGenChecklist').onclick = () => {
+    const trip = tvActiveTrip(); if (!trip) return toast('先新建行程');
+    if (!trip.checklist || typeof trip.checklist !== 'object') trip.checklist = {};
+    Object.keys(DEFAULT_CHECKLIST).forEach(cat => { if (!trip.checklist[cat]) trip.checklist[cat] = DEFAULT_CHECKLIST[cat].map(n => ({name:n, checked:false})); });
+    Store.save(); renderTravel(); toast('通用清单已生成，勾选后告诉 AI 按目的地增减');
+  };
+  $('#tvGenBudget').onclick = () => {
+    const trip = tvActiveTrip(); if (!trip) return toast('先新建行程');
+    if (!trip.budget || typeof trip.budget !== 'object') trip.budget = {};
+    DEFAULT_BUDGET_ITEMS.forEach(k => { if (!trip.budget[k]) trip.budget[k] = {planned:0,actual:0}; });
+    Store.save(); renderTravel(); toast('预算骨架已生成，填金额即可');
+  };
+  $('#tvAddCancel').onclick = () => { $('#tvAddItemModal').classList.remove('show'); _tvAddCtx = null; };
+  $('#tvAddSave').onclick = () => {
+    if (!_tvAddCtx) return;
+    const { kind, tripId, cur } = _tvAddCtx;
+    const trip = S.travel.trips[tripId]; if (!trip) return;
+    const id = uid();
+    if (kind==='itin') {
+      const t=$('#tvfTime').value.trim(), ti=$('#tvfTitle').value.trim(), p=$('#tvfPlace').value.trim(), tg=$('#tvfTag').value.trim();
+      if (!ti) return toast('请填行程标题');
+      trip.itinerary[cur] = trip.itinerary[cur] || [];
+      trip.itinerary[cur].push({id, time:t, title:ti, place:p, tag:tg});
+    } else if (kind==='stay') {
+      const n=$('#tvfName').value.trim(), a=$('#tvfAddr').value.trim(), t=$('#tvfTime').value.trim(), p=+$('#tvfPrice').value||0;
+      if (!n) return toast('请填住宿名称');
+      trip.stays[cur] = trip.stays[cur] || [];
+      trip.stays[cur].push({id, name:n, addr:a, time:t, price:p});
+    } else if (kind==='food') {
+      const n=$('#tvfName').value.trim(), a=$('#tvfAddr').value.trim(), p=+$('#tvfPrice').value||0;
+      if (!n) return toast('请填店名');
+      trip.foods[cur] = trip.foods[cur] || [];
+      trip.foods[cur].push({id, name:n, addr:a, price:p, checked:false});
+    } else if (kind==='exp') {
+      const c=$('#tvfCat').value, a=+$('#tvfAmount').value||0, py=$('#tvfPay').value.trim(), n=$('#tvfNote').value.trim();
+      if (!a) return toast('请填金额');
+      trip.expenses[cur] = trip.expenses[cur] || [];
+      trip.expenses[cur].push({id, cat:c, amount:a, pay:py, note:n});
+    }
+    Store.save(); $('#tvAddItemModal').classList.remove('show'); _tvAddCtx = null; renderTravel(); toast('已添加');
+  };
+  $('#tvGenCancel').onclick = () => { $('#tvGenModal').classList.remove('show'); _tvGenKind = null; };
+  $('#tvGenSave').onclick = () => {
+    const trip = tvActiveTrip(); if (!trip || !_tvGenKind) return;
+    const dest = $('#tvGenDest').value.trim();
+    const days = +$('#tvGenDays').value || 0;
+    if (!dest) return toast('请填目的地');
+    if (_tvGenKind==='guide' && !days) return toast('请填天数');
+    if (_tvGenKind==='guide') trip.guidePending = {dest, days};
+    else trip.posesPending = {dest, days: days || 1};
+    Store.save(); $('#tvGenModal').classList.remove('show'); _tvGenKind = null; renderTravel(); toast('已保存，告诉 AI 帮你生成');
+  };
+}
 
 /* ========== 乐乐宝宝（女朋友栏位） ========== */
 // 农历 9-28 → 公历 预计算（2025-2054，lunar-javascript 实测） 离线可用
@@ -2591,6 +2846,12 @@ function normalizeState() {
   if (!S.fitness.custom) S.fitness.custom = {};
   if (!S.fitness.log) S.fitness.log = {};
   if (!S.fitness.cycleStart) S.fitness.cycleStart = '2026-08-05';
+  // 旅行：旧 bucket list 数组 → 新结构
+  if (Array.isArray(S.travel)) {
+    S.travel = { activeTripId: null, trips: {}, oldList: S.travel };
+  } else if (!S.travel || typeof S.travel !== 'object') S.travel = { activeTripId: null, trips: {} };
+  if (!S.travel.trips) S.travel.trips = {};
+  if (S.travel.activeTripId && !S.travel.trips[S.travel.activeTripId]) S.travel.activeTripId = null;
 }
 
 /* ----------------------- 启动 ----------------------- */
@@ -2615,6 +2876,7 @@ try { renderAll(); } catch (e) { console.error('[renderAll] 失败：', e); }
 try { setupReminder(); } catch (e) { console.error('[setupReminder] 失败：', e); }
 try { setupDataTools(); } catch (e) { console.error('[setupDataTools] 失败：', e); }
 try { setupGithubUI(); } catch (e) { console.error('[setupGithubUI] 失败：', e); }
+try { setupTravel(); } catch (e) { console.error('[setupTravel] 失败：', e); }
 
 // 通知内联看门狗：app.js 已正常接管，无需兜底强制开门
 window.__appReady = true;

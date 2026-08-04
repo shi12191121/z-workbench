@@ -1727,5 +1727,100 @@ textarea.form-input { resize: vertical; min-height: 70px; }
   .bill-budget-modal { padding: 20px 16px; }
   .bill-budget-input { font-size: 16px; }
   .modal { padding: 20px 16px; }
+
+  /* 健身 · 3 天循环 窄屏适配 */
+  .ttc-k { flex: 0 0 54px; font-size: 12px; }
+  .ttc-v, .ttc-input { font-size: 12.5px; }
+  .ttc-title { font-size: 13.5px; padding: 9px 11px; }
+  .fit-check { padding: 9px 10px; }
+  .fc-label { font-size: 12.5px; }
+  .wk-row { padding: 8px 10px; }
+  .wk-label { font-size: 12px; }
 }
+
+/* ============ 健身计划 · 3 天循环 ============ */
+.today-train-card {
+  background: linear-gradient(135deg, #eaf4fc 0%, #f6fbff 100%);
+  border: 1px solid rgba(99,168,224,.18);
+  border-left: 4px solid #4a90d9;
+}
+.today-train-card .card-title { color: #1f4f7a; font-weight: 800; }
+.fit-edit {
+  padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(99,168,224,.35);
+  background: #fff; color: #2b6fb0; font-size: 12px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.fit-edit:hover { background: #f6fbff; }
+.ttc-title {
+  font-size: 14.5px; font-weight: 800; color: #1f4f7a;
+  padding: 10px 12px; background: rgba(99,168,224,.08); border-radius: 10px; margin-bottom: 10px;
+}
+.ttc-rows { display: flex; flex-direction: column; gap: 8px; padding: 4px 4px 6px; }
+.ttc-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 9px; background: rgba(255,255,255,.6);
+  border: 1px solid rgba(99,168,224,.12);
+}
+.ttc-k { flex: 0 0 60px; font-size: 12.5px; font-weight: 700; color: #2b6fb0; padding-top: 2px; }
+.ttc-v { flex: 1; min-width: 0; font-size: 13px; color: #14304d; line-height: 1.5; word-break: break-word; }
+.ttc-input {
+  flex: 1; min-width: 0; border: 1px solid rgba(99,168,224,.3);
+  background: #fff; border-radius: 7px; padding: 6px 9px; font-size: 13px; color: #14304d; outline: none;
+}
+.ttc-input:focus { border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,.15); }
+.ttc-edit-actions { display: flex; gap: 8px; padding: 4px 4px 0; justify-content: flex-end; }
+.ttc-save, .ttc-cancel {
+  padding: 7px 16px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.ttc-save { background: var(--grad-lake); color: #fff; }
+.ttc-cancel { background: #eef4f9; color: #2b6fb0; border: 1px solid rgba(99,168,224,.25); }
+
+/* 今日训练打卡 */
+.fit-check {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border-radius: 11px;
+  background: #f8fbff; border: 1px solid rgba(99,168,224,.16);
+  margin-bottom: 8px; cursor: pointer; transition: all .2s;
+}
+.fit-check:hover { background: #eef6fc; }
+.fit-check.on { background: var(--grad-lake); border-color: transparent; color: #fff; box-shadow: 0 4px 12px rgba(31,94,150,.18); }
+.fc-circle {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid rgba(99,168,224,.4); background: #fff; position: relative;
+}
+.fc-circle::after {
+  content: ''; position: absolute; top: 3px; left: 6px; width: 6px; height: 10px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0); transition: transform .2s;
+}
+.fit-check.on .fc-circle { background: #fff; border-color: #fff; }
+.fit-check.on .fc-circle::after { transform: rotate(45deg) scale(1); border-color: #2b6fb0; }
+.fc-label { flex: 1; min-width: 0; font-size: 13px; line-height: 1.5; word-break: break-word; }
+.fit-check.on .fc-label { color: #fff; }
+.fc-del {
+  flex-shrink: 0; background: transparent; border: none; color: inherit; opacity: .55;
+  font-size: 13px; padding: 2px 6px; cursor: pointer; border-radius: 6px;
+}
+.fc-del:hover { opacity: 1; background: rgba(255,255,255,.18); }
+
+/* 本周训练完成度 */
+.wk-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: #f8fbff; border: 1px solid rgba(99,168,224,.14);
+  margin-bottom: 7px;
+}
+.wk-row.today { background: rgba(99,168,224,.10); border-color: rgba(99,168,224,.32); }
+.wk-row.done .wk-circle { background: var(--grad-lake); border-color: transparent; }
+.wk-row.done .wk-circle::after { transform: rotate(45deg) scale(1); border-color: #fff; }
+.wk-row.done .wk-label { color: #2b6fb0; font-weight: 700; }
+.wk-circle {
+  flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(99,168,224,.4); background: #fff; position: relative;
+}
+.wk-circle::after {
+  content: ''; position: absolute; top: 2px; left: 5px; width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0);
+}
+.wk-label { flex: 1; min-width: 0; font-size: 12.5px; color: #14304d; line-height: 1.5; word-break: break-word; }
+.wk-row.today .wk-label { font-weight: 800; color: #1f4f7a; }
 

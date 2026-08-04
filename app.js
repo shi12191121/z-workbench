@@ -2496,20 +2496,21 @@ function setupReminder() {
   }, 30000);
 }
 
-/* ----------------------- 总渲染 ----------------------- */
+/* ----------------------- 总渲染（每个页面独立容错，单页出错不影响全局） ----------------------- */
 function renderAll() {
-  renderGrowth();
-  renderDaily();
-  renderTodoToday();
-  renderFixedSchedule();
-  renderTodos(); renderCourses(); renderVideos(); renderEnglish(); renderFitness(); renderBb();
-  renderStudyTimer();
-  renderWps(); renderReview(); renderSavings(); renderBills();
-  renderDouyin(); renderDouyinStatic(); renderDyMaterial(); renderDyStats(); renderDiet(); renderTravel(); renderLele();
-  renderFreq();
-  renderSyncBadge();
-  updateTodoPageSub();
-  clearAutoFillInputs();
+  const safe = (fn) => { try { fn(); } catch (e) { console.error('[render] ' + (fn && fn.name) + ' 出错，已跳过：', e); } };
+  safe(renderGrowth);
+  safe(renderDaily);
+  safe(renderTodoToday);
+  safe(renderFixedSchedule);
+  safe(renderTodos); safe(renderCourses); safe(renderVideos); safe(renderEnglish); safe(renderFitness); safe(renderBb);
+  safe(renderStudyTimer);
+  safe(renderWps); safe(renderReview); safe(renderSavings); safe(renderBills);
+  safe(renderDouyin); safe(renderDouyinStatic); safe(renderDyMaterial); safe(renderDyStats); safe(renderDiet); safe(renderTravel); safe(renderLele);
+  safe(renderFreq);
+  safe(renderSyncBadge);
+  safe(updateTodoPageSub);
+  safe(clearAutoFillInputs);
 }
 
 /* ----------------------- 数据导出 / 导入（兜底 + 备份） ----------------------- */
@@ -2593,7 +2594,10 @@ function normalizeState() {
 }
 
 /* ----------------------- 启动 ----------------------- */
-Store.onChange(() => { S = Store.state; normalizeState(); renderAll(); });
+// 全局兜底：任何未捕获异常都记到控制台，绝不让单点错误导致整页“点不开”
+window.addEventListener('error', (e) => { console.error('[全局异常]', e.message, e.error); });
+
+Store.onChange(() => { try { S = Store.state; normalizeState(); renderAll(); } catch (e) { console.error('[onChange] 渲染失败：', e); } });
 S = defaultState();
 Store.init();
 S = Store.state;
@@ -2603,14 +2607,21 @@ renderStudyTimer();
 // 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
 if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
 normalizeState();
-switchPage(S.currentPage || 'growth');
-renderAll();
-setupReminder();
+
+// ⚠️ 先“开门”：无论后面渲染是否出错，“开始今天”按钮都先绑好，保证永远能点开
 setupSplash();
-setupDataTools();
-setupGithubUI();
+try { switchPage(S.currentPage || 'growth'); } catch (e) { console.error('[switchPage] 失败：', e); }
+try { renderAll(); } catch (e) { console.error('[renderAll] 失败：', e); }
+try { setupReminder(); } catch (e) { console.error('[setupReminder] 失败：', e); }
+try { setupDataTools(); } catch (e) { console.error('[setupDataTools] 失败：', e); }
+try { setupGithubUI(); } catch (e) { console.error('[setupGithubUI] 失败：', e); }
+
+// 通知内联看门狗：app.js 已正常接管，无需兜底强制开门
+window.__appReady = true;
 
 // 注册 Service Worker（仅用于桌面 App 图标封装，联网优先、不锁死旧数据）
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { console.warn('SW 注册失败（不影响使用）'); });
+  });
 }

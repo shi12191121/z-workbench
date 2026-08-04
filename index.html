@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260804a" />
+<link rel="stylesheet" href="styles.css?v=20260804b" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -801,20 +801,59 @@
 
     <!-- ---------- 旅行计划 ---------- -->
     <section class="page-section" id="page-travel">
-      <div class="page-header"><h1 class="page-title">旅行计划</h1><p class="page-subtitle">把想去的远方，一个个放进清单</p></div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">想去</div><div class="stat-value"><span id="tvWant">0</span><span class="unit">个</span></div></div>
-        <div class="stat-card"><div class="stat-label">已出发</div><div class="stat-value"><span id="tvDone">0</span><span class="unit">个</span></div></div>
-        <div class="stat-card"><div class="stat-label">累计目的地</div><div class="stat-value"><span id="tvTotal">0</span><span class="unit">个</span></div></div>
-      </div>
-      <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">🧳 目的地清单</div></div>
-        <div class="add-row">
-          <input type="text" class="form-input" id="tvName" placeholder="目的地 例：云南大理" maxlength="40" style="flex:2"/>
-          <input type="text" class="form-input" id="tvDate" placeholder="计划日期" maxlength="20" style="flex:1"/>
-          <button class="btn" id="btnAddTv">+ 添加</button>
+      <div class="page-header"><h1 class="page-title">旅行计划</h1><p class="page-subtitle">把想去的远方按天排好，把每一天过好</p></div>
+
+      <!-- 顶部：当前行程标签 + 导出/导入/清空 -->
+      <div class="tv-toolbar">
+        <div class="tv-trip-chip" id="tvTripChip">+ 新建行程</div>
+        <div class="tv-tools">
+          <button class="data-tool-btn" id="tvExport">导出</button>
+          <button class="data-tool-btn" id="tvImport">导入</button>
+          <button class="data-tool-btn" id="tvClear">清空</button>
         </div>
-        <div id="tvList"></div>
+      </div>
+
+      <!-- 4 个统计卡：总天数/总花费/住宿晚数/美食打卡 -->
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">总天数</div><div class="stat-value"><span id="tvDays">0</span><span class="unit">天</span></div><div class="stat-sub" id="tvDateRange">点上方新建行程</div></div>
+        <div class="stat-card"><div class="stat-label">总花费</div><div class="stat-value"><span id="tvSpent">¥0</span></div></div>
+        <div class="stat-card"><div class="stat-label">住宿晚数</div><div class="stat-value"><span id="tvNights">0</span><span class="unit">晚</span></div></div>
+        <div class="stat-card"><div class="stat-label">美食打卡</div><div class="stat-value"><span id="tvFoods">0</span><span class="unit">家</span></div></div>
+      </div>
+
+      <!-- 行程日期（横向滚动） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📅 行程日期</div><button class="btn btn-ghost btn-sm" id="tvManageDates">管理日期</button></div>
+        <div class="tv-days" id="tvDays"></div>
+      </div>
+
+      <!-- 当前选中日期详情（动态渲染 5 个子卡：行程/住宿/美食/花费/小记） -->
+      <div class="tv-detail" id="tvDetail"></div>
+
+      <!-- 🗺 旅行攻略（按目的地生成） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🗺 旅行攻略</div><button class="btn btn-sm" id="tvGenGuide">+ 生成攻略</button></div>
+        <div class="tv-gen-tip" id="tvGuideTip" hidden></div>
+        <div class="tv-guide" id="tvGuide"></div>
+      </div>
+
+      <!-- 📸 拍照姿势（按景点生成） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📸 拍照姿势</div><button class="btn btn-sm" id="tvGenPoses">+ 生成姿势</button></div>
+        <div class="tv-gen-tip" id="tvPosesTip" hidden></div>
+        <div class="tv-poses" id="tvPoses"></div>
+      </div>
+
+      <!-- 🎒 必备物品清单（通用模板，点一下就有） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🎒 必备物品清单</div><button class="btn btn-sm" id="tvGenChecklist">+ 生成清单</button></div>
+        <div class="tv-checklist" id="tvChecklist"></div>
+      </div>
+
+      <!-- 💰 费用清单（按行程天数生成预算骨架） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">💰 费用清单</div><button class="btn btn-sm" id="tvGenBudget">+ 生成预算</button></div>
+        <div class="tv-budget" id="tvBudget"></div>
       </div>
     </section>
 
@@ -974,7 +1013,7 @@
 <script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="cet6words.js?v=20260804a"></script>
-<script src="app.js?v=20260804a"></script>
+<script src="app.js?v=20260804b"></script>
 
 <!-- 启动看门狗（独立脚本，不依赖 app.js）：即使 app.js 完全没加载/崩溃，也保证能进工作台、日期正确 -->
 <script>
@@ -1023,5 +1062,50 @@
   }, 3500);
 })();
 </script>
+
+<!-- ============ 旅行计划 · 新建/编辑行程 ============ -->
+<div class="modal-mask" id="tvTripModal" hidden>
+  <div class="modal">
+    <div class="modal-title">🧳 新建/编辑行程</div>
+    <input class="form-input" id="tvTripTitle" placeholder="行程名称 例：福建 solo trip" maxlength="40" autocomplete="off"/>
+    <div class="add-row" style="margin-top:10px">
+      <input type="date" class="form-input" id="tvTripStart"/>
+      <input type="date" class="form-input" id="tvTripEnd"/>
+    </div>
+    <p class="desc" style="margin:10px 0 0;font-size:12px;color:#718096">起止日期决定 Day1～DayN 卡和当日详情。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="tvTripCancel">取消</button>
+      <button class="btn" id="tvTripSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 旅行计划 · 添加条目（行程/住宿/美食/花费） ============ -->
+<div class="modal-mask" id="tvAddItemModal" hidden>
+  <div class="modal">
+    <div class="modal-title" id="tvAddTitle">添加</div>
+    <div id="tvAddFields"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="tvAddCancel">取消</button>
+      <button class="btn" id="tvAddSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 旅行计划 · 生成攻略/拍照姿势（填目的地+天数，AI 后续搜攻略填入） ============ -->
+<div class="modal-mask" id="tvGenModal" hidden>
+  <div class="modal">
+    <div class="modal-title" id="tvGenTitle">生成</div>
+    <input class="form-input" id="tvGenDest" placeholder="目的地 例：厦门" maxlength="30" autocomplete="off"/>
+    <div class="add-row" style="margin-top:10px">
+      <input type="number" class="form-input" id="tvGenDays" placeholder="天数 例：3" min="1" max="30" inputmode="numeric"/>
+    </div>
+    <p class="desc" style="margin:10px 0 0;font-size:12px;color:#718096">保存后告诉 AI「目的地+天数」，AI 会用 WebSearch 搜小红书/抖音攻略为你生成内容；攻略里每条目都能一键跳到小红书/抖音搜更多。</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="tvGenCancel">取消</button>
+      <button class="btn" id="tvGenSave">保存待生成</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

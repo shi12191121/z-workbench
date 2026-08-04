@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260803v" />
+<link rel="stylesheet" href="styles.css?v=20260804a" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -969,11 +969,59 @@
   </div>
 </div>
 
-<!-- Firebase 兼容版 SDK（未配置时不加载也不影响本地使用）-->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- Firebase 兼容版 SDK（未配置时不加载也不影响本地使用）。加 async 避免弱网阻塞页面解析 -->
+<script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="cet6words.js?v=20260803v"></script>
-<script src="app.js?v=20260803v"></script>
+<script src="cet6words.js?v=20260804a"></script>
+<script src="app.js?v=20260804a"></script>
+
+<!-- 启动看门狗（独立脚本，不依赖 app.js）：即使 app.js 完全没加载/崩溃，也保证能进工作台、日期正确 -->
+<script>
+(function () {
+  // 1) 立即把欢迎页日期设为今天，彻底杜绝“8月1日”卡死
+  try {
+    var sd = document.getElementById('splashDate');
+    if (sd) {
+      var d = new Date(), wk = ['日','一','二','三','四','五','六'];
+      sd.textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 · 周' + wk[d.getDay()];
+    }
+  } catch (e) {}
+
+  function hideSplash() {
+    var sp = document.getElementById('splash');
+    if (sp && !sp.classList.contains('hide')) {
+      sp.classList.add('hide');
+      setTimeout(function () { if (sp && sp.remove) sp.remove(); }, 600);
+    }
+  }
+
+  // 2) 兜底“开始今天”按钮：即使 app.js 没跑，点一下也能进
+  try {
+    var ss = document.getElementById('splashStart');
+    if (ss) ss.addEventListener('click', function () {
+      hideSplash();
+      try { localStorage.setItem('z_splash_seen', '1'); } catch (e) {}
+    });
+  } catch (e) {}
+
+  // 3) 兜底导航：即使 app.js 没跑，点侧栏也能切换页面（纯 DOM，幂等）
+  try {
+    var navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(function (el) {
+      el.addEventListener('click', function () {
+        var page = el.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.toggle('active', n === el); });
+        document.querySelectorAll('.page-section').forEach(function (p) { p.classList.toggle('active', p.id === 'page-' + page); });
+      });
+    });
+  } catch (e) {}
+
+  // 4) 终极兜底：3.5 秒后若 app.js 仍未接管，强制开门，保证永远进得去
+  setTimeout(function () {
+    if (!window.__appReady) hideSplash();
+  }, 3500);
+})();
+</script>
 </body>
 </html>

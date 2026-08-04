@@ -1824,3 +1824,209 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .wk-label { flex: 1; min-width: 0; font-size: 12.5px; color: #14304d; line-height: 1.5; word-break: break-word; }
 .wk-row.today .wk-label { font-weight: 800; color: #1f4f7a; }
 
+/* ===================== 旅行计划（mobile-first） ===================== */
+.tv-toolbar { display: flex; gap: 8px; align-items: center; margin: 0 0 14px; flex-wrap: wrap; }
+.tv-trip-chip {
+  flex: 1; min-width: 0; padding: 10px 14px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(139,123,235,.18), rgba(99,168,224,.18));
+  border: 1px solid rgba(139,123,235,.28); color: #4b3a8c;
+  font-size: 13px; font-weight: 700; cursor: pointer; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tv-trip-chip.has-trip { background: linear-gradient(135deg, #8b7beb, #63a8e0); color: #fff; border-color: transparent; }
+.tv-tools { display: flex; gap: 6px; flex-shrink: 0; }
+.tv-tools .data-tool-btn { font-size: 11.5px; padding: 8px 10px; }
+
+#page-travel .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+#page-travel .stat-card { padding: 10px 12px; }
+#page-travel .stat-card .stat-label { font-size: 11.5px; }
+#page-travel .stat-card .stat-value { font-size: 20px; }
+#page-travel .stat-card .stat-sub { font-size: 11px; color: #718096; margin-top: 4px; }
+
+/* 行程日期横向滚动 */
+.tv-days {
+  display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+.tv-days::-webkit-scrollbar { height: 3px; }
+.tv-days::-webkit-scrollbar-thumb { background: rgba(99,168,224,.4); border-radius: 2px; }
+.tv-day-card {
+  flex: 0 0 76px; scroll-snap-align: start; padding: 10px 8px;
+  border-radius: 12px; background: #fff; border: 1px solid rgba(99,168,224,.18);
+  text-align: center; cursor: pointer; transition: all .15s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.tv-day-card .dnum { font-size: 18px; font-weight: 800; color: #1f4f7a; line-height: 1; }
+.tv-day-card .ddate { font-size: 11px; color: #4a6a8a; }
+.tv-day-card .dwk { font-size: 11px; color: #718096; }
+.tv-day-card.active { background: linear-gradient(135deg, #63a8e0, #4a83c4); border-color: transparent; color: #fff; }
+.tv-day-card.active .dnum, .tv-day-card.active .ddate, .tv-day-card.active .dwk { color: #fff; }
+.tv-day-add {
+  flex: 0 0 76px; padding: 10px 8px; border-radius: 12px; border: 1px dashed rgba(99,168,224,.4);
+  background: transparent; color: #4a83c4; font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* 当日详情 */
+.tv-detail { margin-top: 4px; }
+.tv-day-hero {
+  display: flex; align-items: center; gap: 12px; padding: 14px 12px;
+  border-radius: 14px; background: linear-gradient(135deg, rgba(139,123,235,.14), rgba(99,168,224,.14));
+  border: 1px solid rgba(139,123,235,.2); margin-bottom: 12px;
+}
+.tv-day-hero .dh-date {
+  flex-shrink: 0; width: 56px; height: 56px; border-radius: 14px;
+  background: linear-gradient(135deg, #8b7beb, #63a8e0); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.tv-day-hero .dh-date .dh-d { font-size: 22px; font-weight: 800; line-height: 1; }
+.tv-day-hero .dh-date .dh-m { font-size: 11px; opacity: .9; margin-top: 2px; }
+.tv-day-hero .dh-info { flex: 1; min-width: 0; }
+.tv-day-hero .dh-title { font-size: 14.5px; font-weight: 800; color: #1f4f7a; word-break: break-word; }
+.tv-day-hero .dh-sub { font-size: 12px; color: #4a6a8a; margin-top: 3px; }
+.tv-day-hero .dh-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* 子卡通用（行程/住宿/美食/花费/小记） */
+.tv-subcard { margin-bottom: 12px; }
+.tv-subcard .card-head { padding-bottom: 8px; }
+.tv-subcard .card-head .card-title { font-size: 13.5px; }
+.tv-item {
+  display: flex; align-items: flex-start; gap: 8px; padding: 10px;
+  border-radius: 10px; border: 1px solid rgba(99,168,224,.14);
+  background: #fff; margin-bottom: 6px; position: relative;
+}
+.tv-item:last-child { margin-bottom: 0; }
+.tv-item .ti-main { flex: 1; min-width: 0; }
+.tv-item .ti-line1 { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+.tv-item .ti-time { font-size: 11.5px; color: #4a83c4; font-weight: 700; flex-shrink: 0; }
+.tv-item .ti-title { font-size: 13px; font-weight: 600; color: #1f4f7a; word-break: break-word; }
+.tv-item .ti-sub { font-size: 11.5px; color: #718096; margin-top: 3px; word-break: break-word; }
+.tv-item .ti-price { font-size: 12.5px; color: #d97706; font-weight: 700; flex-shrink: 0; }
+.tv-item .ti-del {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; border: none;
+  background: rgba(220,38,38,.08); color: #dc2626; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.tv-item.checked .ti-title { text-decoration: line-through; color: #94a3b8; }
+.tv-note-area {
+  width: 100%; min-height: 56px; padding: 10px; border-radius: 10px;
+  border: 1px solid rgba(99,168,224,.18); background: #fff; color: #1f4f7a;
+  font-size: 13px; line-height: 1.6; resize: vertical; font-family: inherit;
+}
+.tv-tot {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 4px 2px; font-size: 12.5px; color: #4a6a8a;
+}
+.tv-tot b { color: #d97706; font-size: 14px; }
+
+/* 攻略 */
+.tv-gen-tip {
+  padding: 10px 12px; border-radius: 10px; margin-bottom: 10px;
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.22);
+  font-size: 12.5px; color: #92400e; display: flex; align-items: center; gap: 8px;
+}
+.tv-guide-day { margin-bottom: 12px; }
+.tv-guide-day:last-child { margin-bottom: 0; }
+.tv-guide-day-head {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 10px; background: rgba(139,123,235,.1); margin-bottom: 8px;
+}
+.tv-guide-day-head .gdh-num {
+  flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #8b7beb, #63a8e0); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800;
+}
+.tv-guide-day-head .gdh-title { font-size: 13px; font-weight: 700; color: #1f4f7a; }
+.tv-guide-spot {
+  padding: 10px; border-radius: 10px; border: 1px solid rgba(99,168,224,.14);
+  background: #fff; margin-bottom: 6px;
+}
+.tv-guide-spot .gs-top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+.tv-guide-spot .gs-time {
+  font-size: 11px; padding: 2px 7px; border-radius: 6px;
+  background: rgba(99,168,224,.12); color: #4a83c4; font-weight: 700; flex-shrink: 0;
+}
+.tv-guide-spot .gs-name { font-size: 13px; font-weight: 700; color: #1f4f7a; }
+.tv-guide-spot .gs-tip { font-size: 12px; color: #4a6a8a; line-height: 1.55; margin: 4px 0; }
+.tv-guide-spot .gs-dress { font-size: 11.5px; color: #718096; padding-top: 4px; border-top: 1px dashed rgba(99,168,224,.18); }
+.tv-jump { display: flex; gap: 6px; margin-top: 8px; }
+.tv-jump a {
+  flex: 1; text-align: center; padding: 6px 0; border-radius: 8px;
+  font-size: 11.5px; font-weight: 700; text-decoration: none;
+}
+.tv-jump .jxhs { background: #ff2442; color: #fff; }
+.tv-jump .jdouyin { background: #161823; color: #fff; }
+
+/* 拍照姿势 */
+.tv-pose {
+  padding: 10px; border-radius: 10px; border: 1px solid rgba(99,168,224,.14);
+  background: #fff; margin-bottom: 8px;
+}
+.tv-pose .tp-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.tv-pose .tp-emoji { font-size: 16px; }
+.tv-pose .tp-pose { font-size: 13px; font-weight: 700; color: #1f4f7a; }
+.tv-pose .tp-tip { font-size: 12px; color: #4a6a8a; line-height: 1.55; }
+.tv-pose-group { margin-bottom: 12px; }
+.tv-pose-group:last-child { margin-bottom: 0; }
+.tv-pose-group-head {
+  font-size: 12.5px; font-weight: 700; color: #4b3a8c;
+  padding: 6px 0; margin-bottom: 4px;
+}
+
+/* 物品清单 */
+.tv-check-cat { margin-bottom: 12px; }
+.tv-check-cat:last-child { margin-bottom: 0; }
+.tv-check-cat-head {
+  font-size: 12.5px; font-weight: 700; color: #1f4f7a; margin-bottom: 6px;
+  padding: 6px 10px; border-radius: 8px; background: rgba(99,168,224,.1);
+}
+.tv-check-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 8px; border: 1px solid rgba(99,168,224,.12);
+  background: #fff; margin-bottom: 4px; font-size: 13px; color: #1f4f7a;
+}
+.tv-check-item:last-child { margin-bottom: 0; }
+.tv-check-item.checked { color: #94a3b8; }
+.tv-check-item.checked .tv-ci-name { text-decoration: line-through; }
+.tv-check-item input[type=checkbox] { flex-shrink: 0; }
+.tv-check-item .tv-ci-name { flex: 1; min-width: 0; word-break: break-word; }
+.tv-check-item .tv-ci-del {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; border: none;
+  background: transparent; color: #dc2626; cursor: pointer; font-size: 13px; padding: 0;
+}
+
+/* 费用清单（预算 vs 实际） */
+.tv-bud-row {
+  display: flex; align-items: center; gap: 8px; padding: 10px;
+  border-radius: 10px; border: 1px solid rgba(99,168,224,.14);
+  background: #fff; margin-bottom: 6px;
+}
+.tv-bud-row:last-child { margin-bottom: 0; }
+.tv-bud-row .tb-name { flex: 1; min-width: 0; font-size: 13px; color: #1f4f7a; word-break: break-word; }
+.tv-bud-row .tb-input {
+  width: 64px; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(99,168,224,.2);
+  font-size: 12.5px; text-align: right; font-family: inherit; color: #1f4f7a; background: #fff;
+}
+.tv-bud-row .tb-sep { font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+.tv-bud-row .tb-actual { color: #d97706; font-weight: 700; }
+.tv-bud-tot {
+  display: flex; justify-content: space-between; padding: 10px 4px 2px;
+  font-size: 13px; color: #1f4f7a; font-weight: 700;
+}
+.tv-bud-tot b { color: #d97706; font-size: 15px; }
+
+/* 空状态（统一） */
+.tv-empty {
+  text-align: center; padding: 24px 12px; color: #94a3b8; font-size: 12.5px;
+}
+.tv-empty .te-emoji { font-size: 28px; margin-bottom: 6px; opacity: .6; }
+
+/* 窄屏（≤540px）进一步收紧 */
+@media (max-width: 540px) {
+  .tv-day-card { flex-basis: 70px; }
+  .tv-day-hero .dh-date { width: 50px; height: 50px; }
+  .tv-day-hero .dh-date .dh-d { font-size: 19px; }
+  .tv-day-hero .dh-title { font-size: 13.5px; }
+  #page-travel .stat-card .stat-value { font-size: 18px; }
+}
+

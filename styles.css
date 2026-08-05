@@ -2021,6 +2021,44 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 }
 .tv-empty .te-emoji { font-size: 28px; margin-bottom: 6px; opacity: .6; }
 
+/* ---------- WPS 二级备考 ---------- */
+.wps-overview { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.wps-countdown { width: 100%; }
+.wps-cd-num { font-size: 42px; font-weight: 800; color: #1f4f7a; line-height: 1; }
+.wps-cd-num .unit { font-size: 14px; color: #5b7a99; margin-left: 5px; font-weight: 600; }
+.wps-cd-sub { font-size: 12px; color: #6b8299; margin-top: 5px; }
+.wps-timer { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.wps-timer-clock { font-size: 28px; font-weight: 700; color: #1f4f7a; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.wps-timer-btn { min-width: 150px; }
+.wps-timer-total { font-size: 12px; color: #6b8299; }
+.wps-open-app { width: 100%; }
+
+.wps-mod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.wps-mod-tile { background: #f3f9ff; border: 1.5px solid #e0ecf7; border-radius: 12px; padding: 11px 8px; text-align: center; cursor: pointer; transition: .15s; }
+.wps-mod-tile.on { border-color: #4a90d9; background: #e6f2fd; box-shadow: 0 2px 10px rgba(74,144,217,.2); }
+.wps-mod-ico { font-size: 22px; }
+.wps-mod-name { font-size: 13px; font-weight: 700; color: #2c4a63; margin: 4px 0 7px; }
+.wps-mod-bar { height: 6px; background: #dbe7f2; border-radius: 4px; overflow: hidden; }
+.wps-mod-bar span { display: block; height: 100%; background: linear-gradient(90deg,#5aa9ef,#3d7fce); border-radius: 4px; transition: width .3s; }
+.wps-mod-pct { font-size: 11px; color: #6b8299; margin-top: 5px; }
+
+.wps-mod-h { font-size: 13px; font-weight: 700; color: #2c4a63; margin-bottom: 8px; }
+.wps-point { display: flex; align-items: center; gap: 9px; padding: 9px 4px; border-bottom: 1px dashed #eef3f8; cursor: pointer; }
+.wps-point:last-child { border-bottom: none; }
+.wps-point-ck { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #c2d4e6; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+.wps-point.on .wps-point-ck { background: #4a90d9; border-color: #4a90d9; }
+.wps-point.on .wps-point-tx { color: #9bb0c4; text-decoration: line-through; }
+.wps-point-tx { font-size: 12.5px; color: #2c3e50; flex: 1; line-height: 1.35; }
+
+.wps-paper-row { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-bottom: 1px dashed #eef3f8; }
+.wps-paper-row:last-child { border-bottom: none; }
+.wps-paper-main { flex: 1; min-width: 0; }
+.wps-paper-name { font-size: 13px; font-weight: 600; color: #2c3e50; }
+.wps-score { width: 64px; padding: 5px 6px; font-size: 12px; margin-top: 5px; }
+.wps-paper-btn { flex: 0 0 auto; font-size: 11px; padding: 6px 9px; border-radius: 9px; border: 1.5px solid #cfe0f0; background: #fff; color: #3d7fce; cursor: pointer; white-space: nowrap; }
+.wps-paper-btn.on { background: #4a90d9; color: #fff; border-color: #4a90d9; }
+.wps-paper-btn.wrong.on { background: #e8836b; border-color: #e8836b; }
+
 /* 窄屏（≤540px）进一步收紧 */
 @media (max-width: 540px) {
   .tv-day-card { flex-basis: 70px; }

@@ -77,6 +77,53 @@ const FIT_CYCLE = [
   }
 ];
 
+/* WPS 二级（科目67）专项训练高频考点：基于考试大纲 + 小黑课堂题库结构整理，自动生成 */
+const WPS_MODULES = {
+  word:   { name: 'WPS 文字', icon: '📝', grad: 'grad-sky', points: [
+    '字体/段落格式（字号、颜色、行距、对齐）',
+    '样式与多级列表',
+    '页眉页脚（奇偶页不同、插入页码）',
+    '自动目录生成',
+    '图文混排（图片/形状环绕方式）',
+    '邮件合并',
+    '分栏与分节',
+    '文档修订与批注',
+    '查找替换与格式刷',
+    'PDF 转换与输出'
+  ] },
+  excel:  { name: 'WPS 表格', icon: '📊', grad: 'grad-lake', points: [
+    '单元格格式与数据格式',
+    '常用函数（SUM/AVERAGE/IF）',
+    '查找函数（VLOOKUP/XLOOKUP）',
+    '条件函数（SUMIF/COUNTIF）',
+    '排序与筛选',
+    '分类汇总',
+    '条件格式',
+    '图表创建与美化',
+    '数据透视表',
+    '绝对引用与相对引用'
+  ] },
+  ppt:    { name: 'WPS 演示', icon: '📽', grad: 'grad-fog', points: [
+    '幻灯片版式与母版',
+    '主题与模板应用',
+    '艺术字与文本框',
+    '多媒体插入（图片/音频/视频）',
+    '动画效果（进入/强调/退出）',
+    '幻灯片切换',
+    '超链接与动作按钮',
+    '放映设置与输出'
+  ] },
+  choice: { name: '选择题', icon: '🧠', grad: 'grad-ice', points: [
+    '计算机公共基础（进制转换、存储单位）',
+    '计算机组成原理',
+    '操作系统基础',
+    '计算机网络常识',
+    '信息安全与病毒防护',
+    'WPS 专项知识（快捷键、文件格式）',
+    '数据处理基础'
+  ] }
+};
+
 function defaultState() {
   return {
     currentPage: 'growth',
@@ -90,7 +137,7 @@ function defaultState() {
     ],
     nextTaskId: 5,
     todos: [], nextTodoId: 1,
-    videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05' }, basketball: [], wps: [], reviews: [], savings: [], bills: [], billBudget: 0,
+    videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05' }, basketball: [], wps: { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: [] }, reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: { activeTripId: null, trips: {} },
@@ -422,7 +469,7 @@ function renderNineGrid() {
     { icon: '🏀', label: '篮球训练', val: `${weekCount(S.basketball)} 次`, page: 'basketball', grad: 'grad-lake' },
     { icon: '🍱', label: '饮食作息', val: `${dietWeekCount()} 天`, page: 'diet', grad: 'grad-ice' },
     { icon: '🎵', label: '抖音创作', val: `${S.douyin.length} 条`, page: 'douyin', grad: 'grad-fog' },
-    { icon: '📑', label: 'WPS学习', val: `${S.wps.length} 项`, page: 'wps', grad: 'grad-sky' },
+    { icon: '📑', label: 'WPS学习', val: `${(S.wps.notes ? S.wps.notes.length : 0)} 条`, page: 'wps', grad: 'grad-sky' },
     { icon: '✈️', label: '旅行计划', val: (S.travel && S.travel.trips && Object.keys(S.travel.trips).length) ? '已规划' : '想出发', page: 'travel', grad: 'grad-lake' },
     { icon: '📝', label: '每日复盘', val: `${weekCount(S.reviews)} 天`, page: 'review', grad: 'grad-fog' },
     { icon: '💰', label: '存钱计划', val: `¥${fmt(monthSave())}`, page: 'savings', grad: 'grad-sky' },
@@ -1432,20 +1479,157 @@ $('#btnAddBb').onclick = () => {
 };
 $('#bbList').addEventListener('click', e => { const dl = e.target.closest('[data-bd]'); if (dl) { S.basketball = S.basketball.filter(x => x.id !== +dl.dataset.bd); Store.save(); renderBb(); renderNineGrid(); renderFreq(); toast('已删除'); } });
 
-/* WPS */
-function renderWps() {
-  $('#wpsDays').textContent = new Set(S.wps.map(v => v.date)).size;
-  $('#wpsSkills').textContent = S.wps.length;
-  renderList(S.wps, '#wpsList', v => `
-    <div class="list-item"><div class="li-main"><div class="li-title">${escapeHtml(v.text)}</div><div class="li-sub">${v.date}</div></div>
-      <span class="tag">WPS</span><button class="icon-btn" data-wd="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>`, '还没有 WPS 学习记录，开始学一个技巧吧～');
+/* ----------------------- WPS 二级备考 ----------------------- */
+function daysUntil(dateStr) {
+  const t = new Date(dateStr + 'T00:00:00');
+  const n = new Date(); n.setHours(0, 0, 0, 0);
+  return Math.round((t - n) / 86400000);
 }
-$('#btnAddWps').onclick = () => {
-  const text = $('#wpsContent').value.trim(); if (!text) return toast('请输入内容');
-  S.wps.push({ id: uid(), text, date: todayKey() });
-  Store.save(); $('#wpsContent').value = ''; renderWps(); renderNineGrid(); toast('已记录');
-};
-$('#wpsList').addEventListener('click', e => { const dl = e.target.closest('[data-wd]'); if (dl) { S.wps = S.wps.filter(x => x.id !== +dl.dataset.wd); Store.save(); renderWps(); renderNineGrid(); toast('已删除'); } });
+function wpsTotalSeconds() {
+  let s = S.wps.studySeconds || 0;
+  if (S.wps.wpsStudyStartTs) s += (Date.now() - S.wps.wpsStudyStartTs) / 1000;
+  return s;
+}
+function wpsGenPapers(n, kind) {
+  const arr = [];
+  for (let i = 1; i <= n; i++) arr.push({ id: uid(), no: i, kind, done: false, score: '', wrong: false });
+  return arr;
+}
+const wpsModKeys = ['word', 'excel', 'ppt', 'choice'];
+function wpsModDone(k) { return (S.wps.done[k] || []).length; }
+function wpsModTotal(k) { return (S.wps.modules[k] && S.wps.modules[k].points.length) || 0; }
+
+let wpsSelMod = 'word';
+let wpsTimer = null;
+
+function renderWpsTimer() {
+  const cd = daysUntil(S.wps.examDate);
+  const cdEl = document.getElementById('wpsCdDays'); if (cdEl) cdEl.textContent = cd >= 0 ? cd : '--';
+  const exEl = document.getElementById('wpsExamDate'); if (exEl) exEl.textContent = S.wps.examDate;
+  const clk = document.getElementById('wpsClock'); if (clk) clk.textContent = fmtClock(wpsTotalSeconds());
+  const tog = document.getElementById('wpsTimerToggle'); if (tog) tog.textContent = S.wps.wpsStudyStartTs ? '■ 停止并记录' : '▶ 开始学习';
+  const tot = document.getElementById('wpsTotalMin'); if (tot) tot.textContent = Math.floor(wpsTotalSeconds() / 60);
+}
+function startWpsStudy() {
+  if (S.wps.wpsStudyStartTs) return;
+  S.wps.wpsStudyStartTs = Date.now(); Store.save();
+  if (wpsTimer) clearInterval(wpsTimer);
+  wpsTimer = setInterval(renderWpsTimer, 1000);
+  renderWpsTimer();
+}
+function stopWpsStudy() {
+  if (!S.wps.wpsStudyStartTs) return;
+  const inc = (Date.now() - S.wps.wpsStudyStartTs) / 1000;
+  S.wps.studySeconds = (S.wps.studySeconds || 0) + inc;
+  S.wps.wpsStudyStartTs = null;
+  if (wpsTimer) { clearInterval(wpsTimer); wpsTimer = null; }
+  Store.save(); renderWpsTimer(); toast('已记录本次学习 ' + fmtClock(inc));
+}
+
+function renderWps() {
+  renderWpsTimer();
+  // 专项训练：模块网格 + 进度
+  const grid = document.getElementById('wpsModGrid');
+  if (grid) {
+    grid.innerHTML = wpsModKeys.map(k => {
+      const m = S.wps.modules[k]; const done = wpsModDone(k), total = wpsModTotal(k);
+      const pct = total ? Math.round(done / total * 100) : 0;
+      return `<div class="wps-mod-tile ${wpsSelMod === k ? 'on' : ''}" data-mod="${k}">
+        <div class="wps-mod-ico">${m.icon}</div>
+        <div class="wps-mod-name">${m.name}</div>
+        <div class="wps-mod-bar"><span style="width:${pct}%"></span></div>
+        <div class="wps-mod-pct">${done}/${total}</div>
+      </div>`;
+    }).join('');
+  }
+  const prog = document.getElementById('wpsModProgress');
+  if (prog) { const td = wpsModKeys.reduce((a, k) => a + wpsModDone(k), 0), tt = wpsModKeys.reduce((a, k) => a + wpsModTotal(k), 0); prog.textContent = `已掌握 ${td}/${tt}`; }
+  // 选中模块考点明细
+  const detail = document.getElementById('wpsModDetail');
+  if (detail) {
+    const m = S.wps.modules[wpsSelMod]; const doneArr = S.wps.done[wpsSelMod] || [];
+    detail.innerHTML = `<div class="wps-mod-h">${m.icon} ${m.name} · 高频考点（点选已掌握）</div>` +
+      m.points.map((p, i) => {
+        const on = doneArr.includes(i);
+        return `<div class="wps-point ${on ? 'on' : ''}" data-pt="${i}"><span class="wps-point-ck">${on ? '✓' : ''}</span><span class="wps-point-tx">${escapeHtml(p)}</span></div>`;
+      }).join('');
+  }
+  // 真题套卷
+  const pl = document.getElementById('wpsPaperList');
+  if (pl) pl.innerHTML = (S.wps.papers || []).map(p => wpsPaperRow(p, 'paper')).join('');
+  const ps = document.getElementById('wpsPaperStat');
+  if (ps) { const a = S.wps.papers.filter(p => p.done).length, b = S.wps.papers.filter(p => p.wrong).length; ps.textContent = `已刷 ${a}/${S.wps.papers.length} · 错题 ${b}`; }
+  // 预测题
+  const prl = document.getElementById('wpsPredList');
+  if (prl) prl.innerHTML = (S.wps.predicts || []).map(p => wpsPaperRow(p, 'predict')).join('');
+  const prs = document.getElementById('wpsPredStat');
+  if (prs) { const a = S.wps.predicts.filter(p => p.done).length, b = S.wps.predicts.filter(p => p.wrong).length; prs.textContent = `已刷 ${a}/${S.wps.predicts.length} · 错题 ${b}`; }
+  // 学习记录
+  renderList(S.wps.notes, '#wpsList', v => `
+    <div class="list-item"><div class="li-main"><div class="li-title">${escapeHtml(v.text)}</div><div class="li-sub">${v.date}</div></div>
+      <span class="tag">WPS</span><button class="icon-btn" data-wd="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div>`, '还没有学习记录，记一条今天的收获吧～');
+}
+function wpsPaperRow(p, kind) {
+  const label = kind === 'paper' ? `真题第${p.no}套` : `预测卷${p.no}`;
+  return `<div class="wps-paper-row" data-id="${p.id}" data-kind="${kind}">
+    <div class="wps-paper-main">
+      <div class="wps-paper-name">${label}</div>
+      <input class="form-input wps-score" data-f="score" value="${p.score || ''}" placeholder="分数" inputmode="numeric"/>
+    </div>
+    <button class="wps-paper-btn ${p.done ? 'on' : ''}" data-f="done">${p.done ? '✓ 已刷' : '标记已刷'}</button>
+    <button class="wps-paper-btn wrong ${p.wrong ? 'on' : ''}" data-f="wrong">${p.wrong ? '★ 错题' : '错题'}</button>
+  </div>`;
+}
+
+function setupWps() {
+  const tog = document.getElementById('wpsTimerToggle');
+  if (tog) tog.onclick = () => { if (S.wps.wpsStudyStartTs) stopWpsStudy(); else startWpsStudy(); };
+  const grid = document.getElementById('wpsModGrid');
+  if (grid) grid.addEventListener('click', e => {
+    const t = e.target.closest('.wps-mod-tile'); if (!t) return;
+    wpsSelMod = t.dataset.mod; renderWps();
+  });
+  const detail = document.getElementById('wpsModDetail');
+  if (detail) detail.addEventListener('click', e => {
+    const pt = e.target.closest('.wps-point'); if (!pt) return;
+    const i = +pt.dataset.pt; const arr = S.wps.done[wpsSelMod] || (S.wps.done[wpsSelMod] = []);
+    const idx = arr.indexOf(i);
+    if (idx >= 0) arr.splice(idx, 1); else arr.push(i);
+    Store.save(); renderWps();
+  });
+  ['wpsPaperList', 'wpsPredList'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.addEventListener('click', e => {
+      const row = e.target.closest('.wps-paper-row'); if (!row) return;
+      const arr = row.dataset.kind === 'paper' ? S.wps.papers : S.wps.predicts;
+      const item = arr.find(x => x.id === +row.dataset.id); if (!item) return;
+      const btn = e.target.closest('[data-f]'); if (!btn) return;
+      const f = btn.dataset.f;
+      if (f === 'done') item.done = !item.done;
+      else if (f === 'wrong') item.wrong = !item.wrong;
+      Store.save(); renderWps();
+    });
+    el.addEventListener('input', e => {
+      const row = e.target.closest('.wps-paper-row'); if (!row) return;
+      if (e.target.dataset.f !== 'score') return;
+      const arr = row.dataset.kind === 'paper' ? S.wps.papers : S.wps.predicts;
+      const item = arr.find(x => x.id === +row.dataset.id); if (!item) return;
+      item.score = e.target.value; Store.save();
+    });
+  });
+  const addBtn = document.getElementById('btnAddWps');
+  if (addBtn) addBtn.onclick = () => {
+    const inp = document.getElementById('wpsContent'); const text = inp.value.trim(); if (!text) return toast('请输入内容');
+    S.wps.notes.push({ id: uid(), text, date: todayKey() });
+    Store.save(); inp.value = ''; renderWps(); renderNineGrid(); toast('已记录');
+  };
+  const list = document.getElementById('wpsList');
+  if (list) list.addEventListener('click', e => {
+    const dl = e.target.closest('[data-wd]'); if (dl) { S.wps.notes = S.wps.notes.filter(x => x.id !== +dl.dataset.wd); Store.save(); renderWps(); renderNineGrid(); toast('已删除'); }
+  });
+  const openApp = document.getElementById('wpsOpenApp');
+  if (openApp) openApp.onclick = () => { window.open('https://www.xiaoheiketang.com/', '_blank'); };
+}
 
 /* 每日复盘 */
 function renderReview() {
@@ -2852,6 +3036,20 @@ function normalizeState() {
   } else if (!S.travel || typeof S.travel !== 'object') S.travel = { activeTripId: null, trips: {} };
   if (!S.travel.trips) S.travel.trips = {};
   if (S.travel.activeTripId && !S.travel.trips[S.travel.activeTripId]) S.travel.activeTripId = null;
+  // WPS：旧数组（学习记录）→ 新结构，并自动生成 14 套真题 + 3 套预测题骨架
+  if (Array.isArray(S.wps)) {
+    S.wps = { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: S.wps };
+  } else if (!S.wps || typeof S.wps !== 'object') {
+    S.wps = { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: [] };
+  }
+  if (!S.wps.examDate) S.wps.examDate = '2026-09-19';
+  if (!S.wps.modules) S.wps.modules = WPS_MODULES;
+  if (!S.wps.done) S.wps.done = { word: [], excel: [], ppt: [], choice: [] };
+  if (!S.wps.papers) S.wps.papers = [];
+  if (!S.wps.predicts) S.wps.predicts = [];
+  if (!S.wps.notes) S.wps.notes = [];
+  if (!Array.isArray(S.wps.papers) || !S.wps.papers.length) S.wps.papers = wpsGenPapers(14, 'paper');
+  if (!Array.isArray(S.wps.predicts) || !S.wps.predicts.length) S.wps.predicts = wpsGenPapers(3, 'predict');
 }
 
 /* ----------------------- 启动 ----------------------- */
@@ -2865,6 +3063,9 @@ S = Store.state;
 // 学习计时：若上次未停止，自动续计（避免刷新丢计时）
 if (S._studyStartTs) { studyTimer = setInterval(renderStudyTimer, 1000); }
 renderStudyTimer();
+// WPS 学习计时：同上，独立计时器，避免与剪辑计时冲突
+if (S.wps && S.wps.wpsStudyStartTs) { wpsTimer = setInterval(renderWpsTimer, 1000); }
+try { renderWpsTimer(); } catch (e) { console.error('[renderWpsTimer] 失败：', e); }
 // 按用户要求：一次性把已学习次数归零（仅执行一次，不清空已学单词数）
 if (!S._enZeroed) { S.enStudyCount = 0; S._enZeroed = true; Store.save(); }
 normalizeState();
@@ -2877,6 +3078,7 @@ try { setupReminder(); } catch (e) { console.error('[setupReminder] 失败：', 
 try { setupDataTools(); } catch (e) { console.error('[setupDataTools] 失败：', e); }
 try { setupGithubUI(); } catch (e) { console.error('[setupGithubUI] 失败：', e); }
 try { setupTravel(); } catch (e) { console.error('[setupTravel] 失败：', e); }
+try { setupWps(); } catch (e) { console.error('[setupWps] 失败：', e); }
 
 // 通知内联看门狗：app.js 已正常接管，无需兜底强制开门
 window.__appReady = true;

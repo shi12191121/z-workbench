@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260805c" />
+<link rel="stylesheet" href="styles.css?v=20260805d" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -811,28 +811,31 @@
 
       <!-- 🌙 睡眠作息 -->
       <div class="card">
-        <div class="card-head"><div class="card-title">🌙 睡眠作息</div><div class="card-sub">自动算你每天睡多久</div></div>
+        <div class="card-head"><div class="card-title">🌙 睡眠作息</div><div class="card-sub">今晚记睡觉，明早记起床，跨午夜算时长</div></div>
         <div class="sleep-row">
           <div class="sleep-cell">
-            <div class="sl-lbl">睡觉时间</div>
-            <input type="time" id="bedtime" value="23:30"/>
+            <div class="sl-lbl">🛌 睡觉时间（今天）</div>
+            <input type="time" id="bedtime"/>
+            <div class="sl-hint">今晚几点睡，记在今天</div>
           </div>
           <div class="sleep-cell">
-            <div class="sl-lbl">起床时间</div>
-            <input type="time" id="wakeTime" value="07:00"/>
+            <div class="sl-lbl">⏰ 起床时间（今早）</div>
+            <input type="time" id="wakeTime"/>
+            <div class="sl-hint">今早几点醒，算作「昨晚」的睡眠</div>
           </div>
         </div>
         <div class="sleep-result" id="sleepResult">
-          <span class="sr-num" id="sleepDur">7.5</span>
+          <span class="sr-num" id="sleepDur">—</span>
           <span class="sr-unit">小时</span>
-          <span class="sr-tip" id="sleepTip">目标 7.5h · 已达标 ✓</span>
+          <span class="sr-tip" id="sleepTip">今晚记一下睡觉时间吧</span>
         </div>
         <div class="sleep-goal-row">
           <span class="sg-lbl">目标睡眠</span>
-          <input type="number" id="sleepGoal" min="4" max="12" step="0.5" value="7.5"/>
+          <input type="number" id="sleepGoal" min="4" max="12" step="0.5" value="9"/>
           <span>小时</span>
           <button class="btn sg-btn" id="btnSaveDiet">保存</button>
         </div>
+        <div class="sleep-history" id="sleepHistory"></div>
       </div>
     </section>
 
@@ -1058,7 +1061,7 @@
 <script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="cet6words.js?v=20260804a"></script>
-<script src="app.js?v=20260805c"></script>
+<script src="app.js?v=20260805d"></script>
 
 <!-- 启动看门狗（独立脚本，不依赖 app.js）：即使 app.js 完全没加载/崩溃，也保证能进工作台、日期正确 -->
 <script>

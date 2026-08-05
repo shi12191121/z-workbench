@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260804b" />
+<link rel="stylesheet" href="styles.css?v=20260805a" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -465,14 +465,45 @@
 
     <!-- ---------- WPS 学习 ---------- -->
     <section class="page-section" id="page-wps">
-      <div class="page-header"><h1 class="page-title">WPS 学习</h1><p class="page-subtitle">Word / Excel / PPT 三件套，逐步掌握</p></div>
-      <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">累计学习</div><div class="stat-value"><span id="wpsDays">0</span><span class="unit">天</span></div></div>
-        <div class="stat-card"><div class="stat-label">掌握技能</div><div class="stat-value"><span id="wpsSkills">0</span><span class="unit">项</span></div></div>
+      <div class="page-header"><h1 class="page-title">WPS 学习</h1><p class="page-subtitle">9月计算机二级 · 科目67 WPS Office</p></div>
+
+      <!-- 冲刺概览 -->
+      <div class="card wps-overview">
+        <div class="wps-countdown">
+          <div class="wps-cd-num"><span id="wpsCdDays">--</span><span class="unit">天</span></div>
+          <div class="wps-cd-sub">距考试 <span id="wpsExamDate">2026-09-19</span> 还有</div>
+        </div>
+        <div class="wps-timer">
+          <div class="wps-timer-clock" id="wpsClock">00:00:00</div>
+          <button class="btn wps-timer-btn" id="wpsTimerToggle">▶ 开始学习</button>
+          <div class="wps-timer-total">累计学习 <span id="wpsTotalMin">0</span> 分钟</div>
+        </div>
+        <button class="btn btn-ghost wps-open-app" id="wpsOpenApp">📱 打开小黑课堂刷题</button>
       </div>
-      <div class="card" style="margin-top:18px;">
-        <div class="card-head"><div class="card-title">学习记录</div></div>
-        <div class="add-row"><input type="text" class="form-input" id="wpsContent" placeholder="今天学的 WPS 技巧" maxlength="60"/><button class="btn" id="btnAddWps">+ 记录</button></div>
+
+      <!-- 专项训练 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🎯 专项训练</div><div class="card-sub" id="wpsModProgress"></div></div>
+        <div class="wps-mod-grid" id="wpsModGrid"></div>
+        <div class="wps-mod-detail" id="wpsModDetail"></div>
+      </div>
+
+      <!-- 真题套卷 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📄 真题套卷</div><div class="card-sub" id="wpsPaperStat"></div></div>
+        <div id="wpsPaperList"></div>
+      </div>
+
+      <!-- 预测题 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🔮 预测题</div><div class="card-sub" id="wpsPredStat"></div></div>
+        <div id="wpsPredList"></div>
+      </div>
+
+      <!-- 学习记录 -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">✍️ 学习记录</div></div>
+        <div class="add-row"><input type="text" class="form-input" id="wpsContent" placeholder="今天学的技巧 / 易错点" maxlength="60"/><button class="btn" id="btnAddWps">+ 记</button></div>
         <div id="wpsList"></div>
       </div>
     </section>
@@ -1013,7 +1044,7 @@
 <script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="cet6words.js?v=20260804a"></script>
-<script src="app.js?v=20260804b"></script>
+<script src="app.js?v=20260805a"></script>
 
 <!-- 启动看门狗（独立脚本，不依赖 app.js）：即使 app.js 完全没加载/崩溃，也保证能进工作台、日期正确 -->
 <script>

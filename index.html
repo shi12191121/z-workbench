@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260805b" />
+<link rel="stylesheet" href="styles.css?v=20260805c" />
 <script>
   // 全局禁用浏览器自动填充 / 页面状态恢复（iOS Safari / 夸克 会强制回填历史值，导致打开页面就出现莫名数字）
   document.addEventListener('DOMContentLoaded', () => {
@@ -867,11 +867,19 @@
       <!-- 当前选中日期详情（动态渲染 5 个子卡：行程/住宿/美食/花费/小记） -->
       <div class="tv-detail" id="tvDetail"></div>
 
-      <!-- 🗺 旅行攻略（按目的地生成） -->
+      <!-- 🗺 旅行攻略（按目的地生成 · 可勾选想去） -->
       <div class="card">
         <div class="card-head"><div class="card-title">🗺 旅行攻略</div><button class="btn btn-sm" id="tvGenGuide">+ 生成攻略</button></div>
         <div class="tv-gen-tip" id="tvGuideTip" hidden></div>
+        <div class="tv-guide-stat" id="tvGuideStat" hidden></div>
         <div class="tv-guide" id="tvGuide"></div>
+        <button class="btn tv-resched" id="tvReschedule" disabled>📅 按所选景点生成行程</button>
+      </div>
+
+      <!-- 📍 打卡清单（按所选景点生成） -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📍 打卡清单</div><div class="card-progress" id="tvCheckinStat">0 / 0</div></div>
+        <div class="tv-checkins" id="tvCheckins"></div>
       </div>
 
       <!-- 📸 拍照姿势（按景点生成） -->
@@ -1050,7 +1058,7 @@
 <script async src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="cet6words.js?v=20260804a"></script>
-<script src="app.js?v=20260805b"></script>
+<script src="app.js?v=20260805c"></script>
 
 <!-- 启动看门狗（独立脚本，不依赖 app.js）：即使 app.js 完全没加载/崩溃，也保证能进工作台、日期正确 -->
 <script>

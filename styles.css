@@ -1972,6 +1972,47 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .tv-jump .jxhs { background: #ff2442; color: #fff; }
 .tv-jump .jdouyin { background: #161823; color: #fff; }
 
+/* 攻略：想去勾选 + 统计 + 重排 */
+.tv-guide-stat {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 10px; margin-bottom: 10px; border-radius: 9px;
+  background: rgba(99,168,224,.07); font-size: 12px;
+}
+.tv-guide-stat .tgs-pick { color: #2a9d6b; font-weight: 800; }
+.tv-guide-stat .tgs-sep { color: #9bb4cc; }
+.tv-guide-stat .tgs-total { color: #4a6a8a; font-weight: 700; }
+.tv-guide-stat .tgs-hint { color: #89a3bd; font-size: 11px; margin-left: auto; }
+.tv-guide-spot { display: flex; gap: 8px; align-items: stretch; }
+.tv-guide-spot.picked { border-color: rgba(42,157,107,.4); background: rgba(42,157,107,.05); }
+.tv-guide-spot .tv-pick {
+  flex: 0 0 auto; align-self: flex-start;
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #c2d4e6;
+  background: #fff; color: #b0c2d6; font-size: 14px; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.tv-guide-spot .tv-pick.on { background: #2a9d6b; border-color: #2a9d6b; color: #fff; }
+.tv-guide-spot .gs-body { flex: 1; min-width: 0; }
+.tv-resched {
+  width: 100%; margin-top: 12px; padding: 11px 0; border-radius: 11px;
+  background: linear-gradient(135deg,#4a90d9,#6fb1e0); color: #fff;
+  font-size: 13.5px; font-weight: 800; border: none;
+}
+.tv-resched:disabled { opacity: .5; }
+
+/* 打卡清单 */
+.tv-checkins { display: flex; flex-direction: column; gap: 8px; }
+.tv-ck-item {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  padding: 9px 10px; border-radius: 10px; background: #fff;
+  border: 1px solid rgba(99,168,224,.14);
+}
+.tv-ck-item.on { border-color: rgba(42,157,107,.4); background: rgba(42,157,107,.06); }
+.tv-ck-item input { width: 18px; height: 18px; accent-color: #2a9d6b; flex-shrink: 0; }
+.tv-ck-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tv-ck-name { font-size: 13px; font-weight: 700; color: #1f4f7a; }
+.tv-ck-day { font-size: 11px; color: #89a3bd; }
+.tv-ck-item.on .tv-ck-name { color: #2a9d6b; text-decoration: line-through; }
+
 /* 拍照姿势 */
 .tv-pose {
   padding: 10px; border-radius: 10px; border: 1px solid rgba(99,168,224,.14);

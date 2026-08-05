@@ -2496,24 +2496,40 @@ function renderTravel() {
     detail.innerHTML = `<div class="tv-day-hero"><div class="dh-date"><div class="dh-d">${f.d}</div><div class="dh-m">${f.m}月</div></div><div class="dh-info"><div class="dh-title">Day${idx+1} · ${escapeHtml(trip.title)}</div><div class="dh-sub">📍 ${escapeHtml(trip.title)} · 周${f.wk}</div></div><div class="dh-actions"><button class="icon-btn" id="tvEditDay" title="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button><button class="icon-btn" id="tvDelDay" title="删除当天"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button></div></div><div class="card tv-subcard"><div class="card-head"><div class="card-title">📍 当日行程</div><button class="btn btn-sm" data-add="itin">+ 添加</button></div>${itin.length ? itin.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-time">${escapeHtml(x.time||'')}</span><span class="ti-title">${escapeHtml(x.title||'')}</span></div>${(x.place||x.tag)?`<div class="ti-sub">${x.place?'📍 '+escapeHtml(x.place):''}${x.tag?' · '+escapeHtml(x.tag):''}</div>`:''}</div><button class="ti-del" data-del-itin="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🗺</div>暂无行程，点 + 添加</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">🏨 住宿地</div><button class="btn btn-sm" data-add="stay">+ 添加</button></div>${stays.length ? stays.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.name||'')}</span>${x.price?`<span class="ti-price">¥${x.price}</span>`:''}</div><div class="ti-sub">${x.time?'🕐 '+escapeHtml(x.time):''}${x.addr?' · 📍 '+escapeHtml(x.addr):''}</div></div><button class="ti-del" data-del-stay="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🏨</div>暂无住宿，点 + 添加</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">🍜 美食打卡</div><button class="btn btn-sm" data-add="food">+ 添加</button></div>${foods.length ? foods.map(x => `<div class="tv-item${x.checked?' checked':''}"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.name||'')}</span>${x.price?`<span class="ti-price">¥${x.price}</span>`:''}</div>${x.addr?'<div class="ti-sub">📍 '+escapeHtml(x.addr)+'</div>':''}</div><button class="ti-del" data-del-food="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">🍜</div>暂无美食记录</div>'}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">💰 当日花费</div><button class="btn btn-sm" data-add="exp">+ 记账</button></div>${exps.length ? exps.map(x => `<div class="tv-item"><div class="ti-main"><div class="ti-line1"><span class="ti-title">${escapeHtml(x.cat||'')}</span><span class="ti-price">¥${x.amount||0}</span></div><div class="ti-sub">${x.pay?'· '+escapeHtml(x.pay):''}${x.note?' · '+escapeHtml(x.note):''}</div></div><button class="ti-del" data-del-exp="${x.id}">×</button></div>`).join('') : '<div class="tv-empty"><div class="te-emoji">💰</div>暂无花费记录</div>'}${exps.length?`<div class="tv-tot"><span>当日合计</span><b>¥${dayTot}</b></div>`:''}</div><div class="card tv-subcard"><div class="card-head"><div class="card-title">📝 当日旅行小记</div></div><textarea class="tv-note-area" id="tvNote" placeholder="记录下今天的见闻感受吧">${escapeHtml(note)}</textarea></div>`;
   }
   // 攻略
-  const guideEl = $('#tvGuide'), guideTip = $('#tvGuideTip');
+  const guideEl = $('#tvGuide'), guideTip = $('#tvGuideTip'), guideStat = $('#tvGuideStat'), reschedBtn = $('#tvReschedule');
   if (trip && trip.guidePending) { guideTip.hidden = false; guideTip.innerHTML = `📍 待生成：<b>${escapeHtml(trip.guidePending.dest)}</b> · ${trip.guidePending.days}天 · 告诉 AI 后帮你搜小红书/抖音攻略生成`; }
   else { guideTip.hidden = true; guideTip.innerHTML = ''; }
   const guide = trip ? trip.guide : null;
   if (trip && guide && Object.keys(guide).length) {
+    // 统计想去 / 总数
+    let allCount = 0, pickedCount = 0;
+    Object.keys(guide).sort().forEach(k => (guide[k]||[]).forEach(x => { allCount++; if (x.picked !== false) pickedCount++; }));
+    if (guideStat) { guideStat.hidden = false; guideStat.innerHTML = `<span class="tgs-pick">✅ 想去 ${pickedCount}</span><span class="tgs-sep">/</span><span class="tgs-total">共 ${allCount}</span><span class="tgs-hint">点景点上的 ✓/✗ 选择想去的地方</span>`; }
+    if (reschedBtn) reschedBtn.disabled = false;
     let gh = '';
     Object.keys(guide).sort().forEach(k => {
       const items = guide[k] || []; if (!items.length) return;
       gh += `<div class="tv-guide-day"><div class="tv-guide-day-head"><div class="gdh-num">${k.replace('day','')}</div><div class="gdh-title">${escapeHtml(items[0].theme||'')}</div></div>`;
-      items.forEach(x => {
-        gh += `<div class="tv-guide-spot"><div class="gs-top"><span class="gs-time">${escapeHtml(x.time||'')}</span><span class="gs-name">${escapeHtml(x.name||'')}</span></div><div class="gs-tip">${escapeHtml(x.tip||'')}</div>${x.dress?`<div class="gs-dress">👗 ${escapeHtml(x.dress)}</div>`:''}<div class="tv-jump"><a class="jxhs" href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">小红书</a><a class="jdouyin" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">抖音</a></div></div>`;
+      items.forEach((x, i) => {
+        const isPicked = x.picked !== false;
+        gh += `<div class="tv-guide-spot ${isPicked?'picked':''}">
+          <button class="tv-pick ${isPicked?'on':''}" data-pick="${escapeHtml(k)}::${i}" title="切换是否想去">${isPicked?'✓':'✗'}</button>
+          <div class="gs-body">
+            <div class="gs-top"><span class="gs-time">${escapeHtml(x.time||'')}</span><span class="gs-name">${escapeHtml(x.name||'')}</span></div>
+            <div class="gs-tip">${escapeHtml(x.tip||'')}</div>
+            ${x.dress?`<div class="gs-dress">👗 ${escapeHtml(x.dress)}</div>`:''}
+            <div class="tv-jump"><a class="jxhs" href="https://www.xiaohongshu.com/search_result?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">小红书</a><a class="jdouyin" href="https://search.bilibili.com/all?keyword=${encodeURIComponent(x.name||'')}" target="_blank" rel="noopener">抖音</a></div>
+          </div>
+        </div>`;
       });
       gh += '</div>';
     });
     guideEl.innerHTML = gh;
   } else if (!trip || !trip.guidePending) {
     guideEl.innerHTML = '<div class="tv-empty"><div class="te-emoji">🗺</div>点 + 生成攻略，告诉 AI 目的地和天数，AI 帮你搜小红书/抖音攻略生成</div>';
-  } else { guideEl.innerHTML = ''; }
+    if (guideStat) { guideStat.hidden = true; guideStat.innerHTML = ''; }
+    if (reschedBtn) reschedBtn.disabled = true;
+  } else { guideEl.innerHTML = ''; if (guideStat) { guideStat.hidden = true; guideStat.innerHTML = ''; } if (reschedBtn) reschedBtn.disabled = true; }
   // 拍照姿势
   const posesEl = $('#tvPoses'), posesTip = $('#tvPosesTip');
   if (trip && trip.posesPending) { posesTip.hidden = false; posesTip.innerHTML = `📍 待生成：<b>${escapeHtml(trip.posesPending.dest)}</b> · 告诉 AI 后生成`; }
@@ -2561,6 +2577,22 @@ function renderTravel() {
   } else {
     $('#tvBudget').innerHTML = '<div class="tv-empty"><div class="te-emoji">💰</div>点 + 生成预算，按行程天数生成预算骨架</div>';
   }
+  // 打卡清单（按所选景点重排后生成）
+  const ckEl = $('#tvCheckins'), ckStat = $('#tvCheckinStat');
+  const sched = trip ? trip.schedule : null;
+  if (trip && sched && Object.keys(sched).length) {
+    let spots = [];
+    Object.keys(sched).sort().forEach(d => (sched[d]||[]).forEach(s => spots.push({ d, s })));
+    const done = spots.filter(x => trip.checkins && trip.checkins[x.s.name]).length;
+    if (ckStat) ckStat.textContent = `${done} / ${spots.length}`;
+    ckEl.innerHTML = spots.map(({ d, s }) => {
+      const on = !!(trip.checkins && trip.checkins[s.name]);
+      return `<label class="tv-ck-item ${on?'on':''}"><input type="checkbox" data-ck="${escapeHtml(s.name)}" ${on?'checked':''}/><span class="tv-ck-body"><span class="tv-ck-name">${escapeHtml(s.name)}</span><span class="tv-ck-day">${d}</span></span></label>`;
+    }).join('');
+  } else {
+    if (ckStat) ckStat.textContent = '0 / 0';
+    ckEl.innerHTML = '<div class="tv-empty"><div class="te-emoji">📍</div>先在上方攻略勾选想去的景点，再点「按所选景点生成行程」</div>';
+  }
 }
 
 let _tvAddCtx = null;
@@ -2585,6 +2617,33 @@ function openTvGenModal(kind) {
   $('#tvGenDest').value = pend ? pend.dest : '';
   $('#tvGenDays').value = pend ? pend.days : '';
   $('#tvGenModal').classList.add('show');
+}
+
+function tvReschedule(trip) {
+  if (!trip) return toast('先新建行程');
+  const guide = trip.guide || {};
+  const days = tvTripDates(trip);
+  if (!days.length) return toast('请先设置行程日期');
+  // 收集选中景点（保留原 day 顺序）
+  const pool = [];
+  Object.keys(guide).sort().forEach(k => (guide[k]||[]).forEach(x => { if (x.picked !== false) pool.push({ ...x, srcDay: k }); }));
+  if (!pool.length) return toast('你还没选任何想去的景点，先点攻略里的 ✓');
+  const perDay = Math.max(1, Math.ceil(pool.length / days.length));
+  const schedule = {}; const itinerary = {};
+  days.forEach(d => { schedule[d] = []; itinerary[d] = []; });
+  let di = 0;
+  const pushSpot = (spot, d) => {
+    schedule[d].push(spot);
+    itinerary[d].push({ id: uid(), time: spot.time || '', title: spot.name, place: spot.place || '', tag: spot.tag || '' });
+  };
+  pool.forEach(spot => {
+    if (schedule[days[di]].length >= perDay && di < days.length - 1) di++;
+    pushSpot(spot, days[di]);
+  });
+  trip.schedule = schedule;
+  trip.itinerary = itinerary;
+  trip.checkins = {};
+  Store.save(); renderTravel(); toast('已按所选景点重新排好行程');
 }
 
 function setupTravel() {
@@ -2660,6 +2719,30 @@ function setupTravel() {
     let totP=0,totA=0; Object.values(trip.budget).forEach(v => { totP+=+v.planned||0; totA+=+v.actual||0; });
     const totEl = $('#tvBudget').querySelector('.tv-bud-tot');
     if (totEl) totEl.innerHTML = `<span>预算 ¥${totP} → 实际</span><b>¥${totA}</b>`;
+    Store.save();
+  });
+  $('#tvReschedule').onclick = () => tvReschedule(tvActiveTrip());
+  $('#tvGuide').addEventListener('click', e => {
+    const pb = e.target.closest('[data-pick]');
+    if (pb) {
+      const trip = tvActiveTrip(); if (!trip || !trip.guide) return;
+      const [dk, di] = pb.dataset.pick.split('::');
+      const spot = trip.guide[dk] && trip.guide[dk][+di];
+      if (spot) { spot.picked = !(spot.picked !== false); Store.save(); renderTravel(); }
+      return;
+    }
+  });
+  $('#tvCheckins').addEventListener('change', e => {
+    const t = e.target; if (t.tagName !== 'INPUT' || !t.dataset.ck) return;
+    const trip = tvActiveTrip(); if (!trip) return;
+    if (!trip.checkins) trip.checkins = {};
+    trip.checkins[t.dataset.ck] = t.checked;
+    if (trip.schedule) {
+      let spots = []; Object.keys(trip.schedule).forEach(d => (trip.schedule[d]||[]).forEach(s => spots.push(s)));
+      const done = spots.filter(s => trip.checkins[s.name]).length;
+      const ckStat = document.getElementById('tvCheckinStat');
+      if (ckStat) ckStat.textContent = `${done} / ${spots.length}`;
+    }
     Store.save();
   });
   $('#tvGenGuide').onclick = () => openTvGenModal('guide');
@@ -3072,6 +3155,10 @@ function normalizeState() {
   } else if (!S.travel || typeof S.travel !== 'object') S.travel = { activeTripId: null, trips: {} };
   if (!S.travel.trips) S.travel.trips = {};
   if (S.travel.activeTripId && !S.travel.trips[S.travel.activeTripId]) S.travel.activeTripId = null;
+  Object.values(S.travel.trips).forEach(tr => {
+    if (!tr.schedule || typeof tr.schedule !== 'object') tr.schedule = {};
+    if (!tr.checkins || typeof tr.checkins !== 'object') tr.checkins = {};
+  });
   // WPS：旧数组（学习记录）→ 新结构，并自动生成 14 套真题 + 3 套预测题骨架
   if (Array.isArray(S.wps)) {
     S.wps = { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: S.wps };

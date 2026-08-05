@@ -57,23 +57,17 @@ const FIT_CYCLE = [
   {
     title: 'Day1 · 肩+上肢+核心',
     content: '肩部推举 4 组 + 哑铃弯举 3 组 + 平板支撑 3 组',
-    equip: '2kg 哑铃、瑜伽垫',
-    time: '13:00 - 14:00',
-    morning: '低强度爬楼 30 分钟'
+    time: '13:00 - 14:00'
   },
   {
     title: 'Day2 · 手臂+下肢+脚踝',
     content: '哑铃弯举 4 组 + 深蹲 4 组 + 提踵 3 组 + 脚踝绕环',
-    equip: '2kg 哑铃、瑜伽垫',
-    time: '13:00 - 14:00',
-    morning: '低强度爬楼 30 分钟'
+    time: '13:00 - 14:00'
   },
   {
     title: 'Day3 · 脚踝',
     content: '脚踝绕环 3 组 + 单脚提踵 3 组 + 弹力带内翻/外翻',
-    equip: '弹力带、瑜伽垫',
-    time: '13:00 - 14:00',
-    morning: '低强度爬楼 30 分钟'
+    time: '13:00 - 14:00'
   }
 ];
 
@@ -137,7 +131,7 @@ function defaultState() {
     ],
     nextTaskId: 5,
     todos: [], nextTodoId: 1,
-    videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05' }, basketball: [], wps: { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: [] }, reviews: [], savings: [], bills: [], billBudget: 0,
+    videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, deferred: {}, cycleStart: '2026-08-05' }, basketball: [], wps: { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: [] }, reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
     douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: { activeTripId: null, trips: {} },
@@ -1334,28 +1328,34 @@ function renderFitness() {
   const f = S.fitness;
   const t = todayKey();
   const off = daysBetween(t, f.cycleStart);
-  const beforeCycle = off < 0;            // 今天在循环开始之前：不生成任何训练内容
+  const deferred = !!f.deferred[t];               // 今天被顺延
+  const beforeCycle = off < 0 && !deferred;       // 今天在循环开始前（且非顺延）
   const ci = beforeCycle ? 0 : ((off % 3) + 3) % 3; // 今日循环索引
   const day = f.cycle[ci];
   const edit = f.todayEdit[t] || {};
-  const content = beforeCycle ? '' : (edit.content != null ? edit.content : day.content);
-  const equip = beforeCycle ? '' : (edit.equip != null ? edit.equip : day.equip);
-  const time = beforeCycle ? '' : (edit.time != null ? edit.time : day.time);
-  const morning = beforeCycle ? '' : (edit.morning != null ? edit.morning : day.morning);
+  const content = (beforeCycle || deferred) ? '' : (edit.content != null ? edit.content : day.content);
+  const time = (beforeCycle || deferred) ? '' : (edit.time != null ? edit.time : day.time);
   const wkDay = ['日','一','二','三','四','五','六'][new Date(t+'T00:00:00').getDay()];
   // 顶部统计：本周完成天数 × 60 分钟（简化）
   const wkKeys = []; for (let i=0;i<7;i++) wkKeys.push(addDays(t, i));
   const wkDone = wkKeys.filter(k => f.log[k] && Object.values(f.log[k]).some(Boolean)).length;
   $('#fitDays').textContent = wkDone;
   $('#fitMinutes').textContent = wkDone * 60;
-  // 循环开始前：隐藏编辑按钮与自定义添加行
-  const eb = $('#btnEditToday'); if (eb) eb.style.display = beforeCycle ? 'none' : '';
-  const cr = $('#fitCustomRow'); if (cr) cr.style.display = beforeCycle ? 'none' : '';
+  // 顺延 / 循环开始前：隐藏编辑按钮与自定义添加行
+  const showEdit = !beforeCycle && !deferred;
+  const eb = $('#btnEditToday'); if (eb) eb.style.display = showEdit ? '' : 'none';
+  const cr = $('#fitCustomRow'); if (cr) cr.style.display = showEdit ? '' : 'none';
   // 今日训练内容卡
-  if (beforeCycle) {
-    $('#todayTrainTitle').textContent = '训练循环 · 明天开始';
+  if (deferred) {
+    const nextDay = f.cycle[(((off + 1) % 3) + 3) % 3]; // 顺延后明天该练的
+    $('#todayTrainTitle').textContent = '今天已顺延';
     $('#todayTrainRows').innerHTML = `
-      <div class="ttc-row"><span class="ttc-k">说明</span><span class="ttc-v">你的 3 天循环明天（${escapeHtml(f.cycleStart)}）正式开始，今天先休息～</span></div>
+      <div class="ttc-row"><span class="ttc-k">状态</span><span class="ttc-v">今天没练，已顺延到明天</span></div>
+      <div class="ttc-row"><span class="ttc-k">明天练</span><span class="ttc-v">${escapeHtml(nextDay.title)}</span></div>`;
+  } else if (beforeCycle) {
+    $('#todayTrainTitle').textContent = '训练循环 · 即将开始';
+    $('#todayTrainRows').innerHTML = `
+      <div class="ttc-row"><span class="ttc-k">说明</span><span class="ttc-v">你的 3 天循环将于 ${escapeHtml(f.cycleStart)} 开始，今天先休息～</span></div>
       <div class="ttc-row"><span class="ttc-k">Day1</span><span class="ttc-v">肩 + 上肢 + 核心</span></div>
       <div class="ttc-row"><span class="ttc-k">Day2</span><span class="ttc-v">手臂 + 下肢 + 脚踝</span></div>
       <div class="ttc-row"><span class="ttc-k">Day3</span><span class="ttc-v">脚踝</span></div>`;
@@ -1363,9 +1363,7 @@ function renderFitness() {
     $('#todayTrainTitle').textContent = `周${wkDay} · ${day.title}`;
     $('#todayTrainRows').innerHTML = `
       <div class="ttc-row"><span class="ttc-k">训练内容</span><input class="ttc-input" id="edContent" value="${escapeHtml(content)}"/></div>
-      <div class="ttc-row"><span class="ttc-k">装备</span><input class="ttc-input" id="edEquip" value="${escapeHtml(equip)}"/></div>
       <div class="ttc-row"><span class="ttc-k">时段</span><input class="ttc-input" id="edTime" value="${escapeHtml(time)}"/></div>
-      <div class="ttc-row"><span class="ttc-k">晨间</span><input class="ttc-input" id="edMorning" value="${escapeHtml(morning)}"/></div>
       <div class="ttc-edit-actions">
         <button class="ttc-save" id="ttcSave">✓ 保存</button>
         <button class="ttc-cancel" id="ttcCancel">✕ 取消</button>
@@ -1373,12 +1371,7 @@ function renderFitness() {
     $('#ttcSave').onclick = () => {
       const ce = $('#edContent').value.trim();
       if (!ce) return toast('训练内容不能为空');
-      f.todayEdit[t] = {
-        content: ce,
-        equip: $('#edEquip').value.trim(),
-        time: $('#edTime').value.trim(),
-        morning: $('#edMorning').value.trim()
-      };
+      f.todayEdit[t] = { content: ce, time: $('#edTime').value.trim() };
       Store.save(); fitEditingToday = false; renderFitness(); toast('已保存今日内容');
     };
     $('#ttcCancel').onclick = () => { fitEditingToday = false; renderFitness(); };
@@ -1386,18 +1379,17 @@ function renderFitness() {
     $('#todayTrainTitle').textContent = `周${wkDay} · ${day.title}`;
     $('#todayTrainRows').innerHTML = `
       <div class="ttc-row"><span class="ttc-k">训练内容</span><span class="ttc-v">${escapeHtml(content)}</span></div>
-      <div class="ttc-row"><span class="ttc-k">装备</span><span class="ttc-v">${escapeHtml(equip)}</span></div>
-      <div class="ttc-row"><span class="ttc-k">时段</span><span class="ttc-v">${escapeHtml(time)}</span></div>
-      <div class="ttc-row"><span class="ttc-k">晨间</span><span class="ttc-v">${escapeHtml(morning)}</span></div>`;
+      <div class="ttc-row"><span class="ttc-k">时段</span><span class="ttc-v">${escapeHtml(time)}</span></div>`;
   }
   // 今日训练打卡
-  if (beforeCycle) {
-    $('#todayCheckList').innerHTML = '<div class="ttc-v" style="padding:8px 4px;color:var(--text-sub)">🗓️ 循环明天开始，今天无需打卡，好好休息～</div>';
+  if (deferred) {
+    $('#todayCheckList').innerHTML = '<div class="ttc-v" style="padding:8px 4px;color:var(--text-sub)">📅 今天已顺延，明天再练。如需恢复今天的训练，点下方「撤销顺延」。</div>';
+  } else if (beforeCycle) {
+    $('#todayCheckList').innerHTML = '<div class="ttc-v" style="padding:8px 4px;color:var(--text-sub)">🗓️ 循环即将开始，今天无需打卡，好好休息～</div>';
   } else {
     if (!f.log[t]) f.log[t] = {};
     const tasks = [
-      { key: 'train', label: `${day.title} · ${content}` },
-      { key: 'morning', label: `晨间安排：${morning}` }
+      { key: 'train', label: `✅ 完成今日训练 · ${day.title}` }
     ];
     const customs = f.custom[t] || [];
     customs.forEach(c => tasks.push({ key: 'cu'+c.id, label: c.name, custom: true, cid: c.id }));
@@ -1410,10 +1402,28 @@ function renderFitness() {
       </div>`;
     }).join('');
   }
-  // 本周训练完成度（循环开始前显示「循环未开始」）
+  // 今日操作按钮（完成 / 顺延 / 撤销顺延）
+  const act = $('#fitActions');
+  if (act) {
+    if (deferred) {
+      act.innerHTML = `<button class="fit-act undo" data-fit-action="undo">↶ 撤销顺延（恢复今天的训练）</button>`;
+    } else if (beforeCycle) {
+      act.innerHTML = '';
+    } else {
+      const done = !!f.log[t] && !!f.log[t].train;
+      act.innerHTML = `
+        <button class="fit-act ${done?'done':''}" data-fit-action="done">${done?'✓ 今日已完成':'✓ 完成今日训练'}</button>
+        <button class="fit-act defer" data-fit-action="defer">↷ 今天没练 · 顺延到明天</button>`;
+    }
+  }
+  // 本周训练完成度
   $('#weekTrainList').innerHTML = wkKeys.map((k, i) => {
     const o2 = daysBetween(k, f.cycleStart);
     if (o2 < 0) {
+      if (f.deferred[k]) {
+        const wkL = ['日','一','二','三','四','五','六'][new Date(k+'T00:00:00').getDay()];
+        return `<div class="wk-row ${i===0?'today':''} deferred"><span class="wk-circle"></span><span class="wk-label">周${wkL} · 已顺延</span></div>`;
+      }
       const wkL = ['日','一','二','三','四','五','六'][new Date(k+'T00:00:00').getDay()];
       return `<div class="wk-row ${i===0?'today':''}"><span class="wk-circle"></span><span class="wk-label">周${wkL} · 循环未开始</span></div>`;
     }
@@ -1422,12 +1432,13 @@ function renderFitness() {
     const done = f.log[k] && Object.values(f.log[k]).some(Boolean);
     const wkL = ['日','一','二','三','四','五','六'][new Date(k+'T00:00:00').getDay()];
     const lab = `周${wkL} · ${d2.title}${i===0?'（今天）':''}`;
-    return `<div class="wk-row ${i===0?'today':''} ${done?'done':''}">
+    return `<div class="wk-row ${i===0?'today':''} ${done?'done':''}>
       <span class="wk-circle"></span>
       <span class="wk-label">${escapeHtml(lab)}</span>
     </div>`;
   }).join('');
 }
+
 
 // 编辑今日训练内容
 $('#btnEditToday').onclick = () => { fitEditingToday = true; renderFitness(); };
@@ -1461,6 +1472,30 @@ $('#btnAddFitCustom').onclick = () => {
   S.fitness.custom[t].push({ id: uid(), name: v });
   Store.save(); $('#fitCustom').value = ''; renderFitness(); toast('已添加');
 };
+
+// 今日操作：完成 / 顺延 / 撤销顺延（事件委托，renderFitness 会重渲染按钮）
+$('#fitActions').addEventListener('click', e => {
+  const b = e.target.closest('[data-fit-action]'); if (!b) return;
+  const act = b.dataset.fitAction;
+  const t = todayKey();
+  const f = S.fitness;
+  if (act === 'done') {
+    if (!f.log[t]) f.log[t] = {};
+    f.log[t].train = !f.log[t].train;
+    Store.save(); renderFitness();
+  } else if (act === 'defer') {
+    if (f.deferred[t]) return;
+    f.cycleStart = addDays(f.cycleStart, 1);   // 循环整体后移一天
+    f.deferred[t] = true;                       // 今天记为顺延
+    delete f.log[t];                            // 今天不再计入完成
+    Store.save(); renderFitness(); toast('已顺延到明天，循环继续');
+  } else if (act === 'undo') {
+    if (!f.deferred[t]) return;
+    f.cycleStart = addDays(f.cycleStart, -1);   // 循环前移一天
+    delete f.deferred[t];                        // 恢复今天的训练
+    Store.save(); renderFitness(); toast('已恢复今天的训练');
+  }
+});
 
 /* 篮球 */
 function renderBb() {
@@ -3029,6 +3064,7 @@ function normalizeState() {
   if (!S.fitness.todayEdit) S.fitness.todayEdit = {};
   if (!S.fitness.custom) S.fitness.custom = {};
   if (!S.fitness.log) S.fitness.log = {};
+  if (!S.fitness.deferred) S.fitness.deferred = {};
   if (!S.fitness.cycleStart) S.fitness.cycleStart = '2026-08-05';
   // 旅行：旧 bucket list 数组 → 新结构
   if (Array.isArray(S.travel)) {

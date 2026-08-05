@@ -134,7 +134,7 @@ function defaultState() {
     videos: [], english: [], fitness: { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, deferred: {}, cycleStart: '2026-08-05' }, basketball: [], wps: { examDate: '2026-09-19', studySeconds: 0, wpsStudyStartTs: 0, modules: WPS_MODULES, done: { word: [], excel: [], ppt: [], choice: [] }, papers: [], predicts: [], notes: [] }, reviews: [], savings: [], bills: [], billBudget: 0,
     enDaily: {}, enWords: [], enBili: [], enLearnedWords: [], enLearnedCount: 0, enStudyCount: 0, enLastStudy: 0,
     fixedSchedule: [], nextFixedId: 1,
-    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 7.5, wakeTime: '07:00', bedtime: '23:30' }, travel: { activeTripId: null, trips: {} },
+    douyin: [], dyMaterial: undefined, dyMatUpdated: '', dyStats: [], diet: { meals: {}, mealPlan: { breakfast: '', lunch: '', dinner: '' }, waterCups: DEFAULT_WATER_CUPS.slice(), waterGoal: 3000, weight: '', waterLog: {}, sleepGoal: 9, wakeTime: '07:00', bedtime: '23:30', sleepLog: {} }, travel: { activeTripId: null, trips: {} },
     courses: [], studySeconds: 0, _studyStartTs: 0,
     gfCust: [], gfMem: [], gfInteract: {},
     goal: 10000
@@ -2349,18 +2349,53 @@ function renderWater() {
 }
 
 function renderSleep() {
-  $('#bedtime').value = S.diet.bedtime || '23:30';
-  $('#wakeTime').value = S.diet.wakeTime || '07:00';
-  $('#sleepGoal').value = S.diet.sleepGoal || 7.5;
-  updateSleepCalc();
+  const today = todayKey();
+  const y = addDays(today, -1);
+  if (!S.diet.sleepLog) S.diet.sleepLog = {};
+  const bedRec = S.diet.sleepLog[today] || {};
+  const yRec = S.diet.sleepLog[y] || {};
+  $('#bedtime').value = bedRec.bed || '';
+  $('#wakeTime').value = yRec.wake || '';
+  $('#sleepGoal').value = S.diet.sleepGoal || 9;
+  // 昨晚（今早记录的）睡眠
+  const dur = $('#sleepDur'), tip = $('#sleepTip'), res = $('#sleepResult');
+  const goal = S.diet.sleepGoal || 9;
+  if (yRec.bed && yRec.wake) {
+    const h = sleepHours(yRec.bed, yRec.wake);
+    if (dur) dur.textContent = h;
+    const ok = h >= goal;
+    if (tip) tip.textContent = ok ? `目标 ${goal}h · 已达标 ✓` : `目标 ${goal}h · 还差 ${(goal - h).toFixed(1)}h`;
+    if (res) res.classList.toggle('ok', ok);
+  } else if (yRec.bed && !yRec.wake) {
+    if (dur) dur.textContent = '—';
+    if (tip) tip.textContent = `昨晚 ${yRec.bed} 睡的 · 今早填完起床时间就显示时长`;
+    if (res) res.classList.remove('ok');
+  } else {
+    if (dur) dur.textContent = '—';
+    if (tip) tip.textContent = bedRec.bed ? `今晚 ${bedRec.bed} 已记下 · 明早来填起床时间` : '今晚记一下睡觉时间吧';
+    if (res) res.classList.remove('ok');
+  }
+  renderSleepHistory();
 }
-function updateSleepCalc() {
-  const h = sleepHours($('#bedtime').value, $('#wakeTime').value);
-  const dur = $('#sleepDur'); if (dur) dur.textContent = h;
-  const goal = +$('#sleepGoal').value || 7.5;
-  const ok = h >= goal;
-  const tip = $('#sleepTip'); if (tip) tip.textContent = ok ? `目标 ${goal}h · 已达标 ✓` : `目标 ${goal}h · 还差 ${(goal - h).toFixed(1)}h`;
-  const res = $('#sleepResult'); if (res) res.classList.toggle('ok', ok);
+function renderSleepHistory() {
+  const el = $('#sleepHistory'); if (!el) return;
+  const log = S.diet.sleepLog || {};
+  const keys = Object.keys(log).filter(k => log[k].bed || log[k].wake).sort().reverse();
+  if (!keys.length) { el.innerHTML = '<div class="slh-empty">还没有睡眠记录，今晚记一下吧～</div>'; return; }
+  const goal = S.diet.sleepGoal || 9;
+  el.innerHTML = keys.slice(0, 14).map(k => {
+    const r = log[k];
+    let hTxt, ok = false;
+    if (r.bed && r.wake) { const h = sleepHours(r.bed, r.wake); hTxt = h + 'h'; ok = h >= goal; }
+    else if (r.bed) hTxt = '待填起床';
+    else hTxt = '待填睡觉';
+    const wk = ['日','一','二','三','四','五','六'][new Date(k + 'T00:00:00').getDay()];
+    return `<div class="slh-row ${ok ? 'ok' : ''}">
+      <span class="slh-date">${k.slice(5)} 周${wk}</span>
+      <span class="slh-range">${r.bed || '--:--'} → ${r.wake || '--:--'}</span>
+      <span class="slh-dur">${hTxt}</span>
+    </div>`;
+  }).join('');
 }
 
 // 三餐：勾选 + 编辑
@@ -2426,17 +2461,33 @@ $('#fitWeightApply').addEventListener('click', () => {
   Store.save(); renderWater(); toast(`已按体重设为运动日目标 ${train}ml`);
 });
 
-// 睡眠：实时算 + 保存
-['bedtime','wakeTime','sleepGoal'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('input', updateSleepCalc);
-  el.addEventListener('change', updateSleepCalc);
-});
+// 睡眠：按「晚」记录 —— 睡觉时间记今天、起床时间记昨天（属昨晚）
+function saveBedtime() {
+  const today = todayKey();
+  if (!S.diet.sleepLog) S.diet.sleepLog = {};
+  if (!S.diet.sleepLog[today]) S.diet.sleepLog[today] = {};
+  S.diet.sleepLog[today].bed = $('#bedtime').value || '';
+  Store.save(); renderSleep();
+}
+function saveWake() {
+  const y = addDays(todayKey(), -1);
+  if (!S.diet.sleepLog) S.diet.sleepLog = {};
+  if (!S.diet.sleepLog[y]) S.diet.sleepLog[y] = {};
+  S.diet.sleepLog[y].wake = $('#wakeTime').value || '';
+  Store.save(); renderSleep();
+}
+const bedEl = document.getElementById('bedtime');
+if (bedEl) { bedEl.addEventListener('input', saveBedtime); bedEl.addEventListener('change', saveBedtime); }
+const wakeEl = document.getElementById('wakeTime');
+if (wakeEl) { wakeEl.addEventListener('input', saveWake); wakeEl.addEventListener('change', saveWake); }
+const goalEl = document.getElementById('sleepGoal');
+if (goalEl) {
+  goalEl.addEventListener('input', () => { S.diet.sleepGoal = +goalEl.value || 9; Store.save(); if ($('#dietSleep')) $('#dietSleep').textContent = S.diet.sleepGoal; renderSleepHistory(); });
+  goalEl.addEventListener('change', () => { S.diet.sleepGoal = +goalEl.value || 9; Store.save(); renderSleep(); });
+}
 $('#btnSaveDiet').onclick = () => {
-  S.diet.bedtime = $('#bedtime').value || '23:30';
-  S.diet.wakeTime = $('#wakeTime').value || '07:00';
-  S.diet.sleepGoal = +$('#sleepGoal').value || 7.5;
+  saveBedtime(); saveWake();
+  S.diet.sleepGoal = +$('#sleepGoal').value || 9;
   Store.save(); renderSleep(); toast('作息已保存');
 };
 
@@ -3137,6 +3188,12 @@ function normalizeState() {
   if (typeof S.diet.weight === 'undefined') S.diet.weight = '';
   if (!S.diet.waterLog) S.diet.waterLog = {};
   if (!S.diet.bedtime) S.diet.bedtime = '23:30';
+  if (!S.diet.sleepLog || typeof S.diet.sleepLog !== 'object') S.diet.sleepLog = {};
+  if (typeof S.diet.sleepGoal !== 'number') S.diet.sleepGoal = 9;
+  // 旧版单对 bed/wake 迁移为「今晚」一条记录（仅当 sleepLog 为空）
+  if (Object.keys(S.diet.sleepLog).length === 0 && S.diet.bedtime && S.diet.wakeTime) {
+    S.diet.sleepLog[todayKey()] = { bed: S.diet.bedtime, wake: S.diet.wakeTime };
+  }
   // 健身：旧数组 → 3 天循环对象（保留旧记录为 history）
   if (Array.isArray(S.fitness)) {
     S.fitness = { cycle: FIT_CYCLE.map(d => ({ ...d })), todayEdit: {}, custom: {}, log: {}, cycleStart: '2026-08-05', history: S.fitness };

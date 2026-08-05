@@ -605,6 +605,15 @@ textarea.form-input { resize: vertical; min-height: 70px; }
 .sg-lbl { font-size: 12px; color: var(--text-body); font-weight: 600; }
 .sleep-goal-row input[type="number"] { width: 56px; border: none; background: transparent; font-size: 15px; font-weight: 800; color: var(--text-title); outline: none; padding: 0; }
 .sleep-goal-row > span:last-of-type { font-size: 12px; color: var(--text-body); }
+.sl-hint { font-size: 10.5px; color: rgba(31,79,122,.5); margin-top: 2px; line-height: 1.3; }
+.sleep-history { margin-top: 14px; border-top: 1px dashed rgba(99,168,224,.25); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.slh-empty { font-size: 12px; color: rgba(31,79,122,.5); text-align: center; padding: 6px 0; }
+.slh-row { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 7px 10px; background: #f8fbff; border: 1px solid rgba(99,168,224,.14); border-radius: 10px; }
+.slh-row.ok { background: linear-gradient(135deg,#e8f7f1,#f3fbf8); border-color: rgba(127,200,160,.3); }
+.slh-date { font-weight: 700; color: var(--text-title); min-width: 64px; }
+.slh-range { flex: 1; color: rgba(26,61,92,.7); font-variant-numeric: tabular-nums; min-width: 0; }
+.slh-dur { font-weight: 800; color: #1f4f7a; min-width: 56px; text-align: right; }
+.slh-row.ok .slh-dur { color: #2f6b5c; }
 .sg-btn { padding: 7px 16px; font-size: 12.5px; margin-left: auto; }
 
 /* ============ Toast ============ */
